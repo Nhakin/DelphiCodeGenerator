@@ -1085,7 +1085,7 @@ Procedure TColor.LoadFromStream(ASource : IStreamEx);
 Var lColorName : String;
     X : Integer;
 Begin
-  lColorName := ASource.ReadString(13);
+  lColorName := ASource.ReadAnsiString(13);
   For X := 1 To Length(lColorName) Do
     If lColorName[X] <> #0 Then
       FColorName := FColorName + lColorName[X]
@@ -1099,7 +1099,7 @@ End;
 
 Procedure TColor.SaveToStream(ATarget : IStreamEx);
 Begin
-  ATarget.WriteString(FColorName, False);
+  ATarget.WriteAnsiString(FColorName, False);
   ATarget.WriteByte(FRed);
   ATarget.WriteByte(FGreen);
   ATarget.WriteByte(FBlue);

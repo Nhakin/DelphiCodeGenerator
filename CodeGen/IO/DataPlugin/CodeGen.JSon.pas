@@ -94,6 +94,12 @@ Type
     Function  GetMakeList() : Boolean;
     Procedure SetMakeList(Const AMakeList : Boolean);
 
+    Function  GetUseEnumerator() : Boolean;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
+
+    Function  GetUseNestedClass() : Boolean;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean);
+
     Function  GetTrackChange() : Boolean;
     Procedure SetTrackChange(Const ATrackChange : Boolean);
 
@@ -104,6 +110,8 @@ Type
     Property UseInterface    : Boolean  Read GetUseInterface    Write SetUseInterface;
     Property UseStrict       : Boolean  Read GetUseStrict       Write SetUseStrict;
     Property MakeList        : Boolean  Read GetMakeList        Write SetMakeList;
+    Property UseEnumerator   : Boolean  Read GetUseEnumerator   Write SetUseEnumerator;
+    Property UseNestedClass  : Boolean  Read GetUseNestedClass  Write SetUseNestedClass;
     Property TrackChange     : Boolean  Read GetTrackChange     Write SetTrackChange;
     Property SettingDataType : SOString Read GetSettingDataType Write SetSettingDataType;
 
@@ -336,6 +344,12 @@ Type
 
     Function  GetMakeList() : Boolean; Virtual;
     Procedure SetMakeList(Const AMakeList : Boolean); Virtual;
+
+    Function  GetUseEnumerator() : Boolean; Virtual;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean); Virtual;
+
+    Function  GetUseNestedClass() : Boolean; Virtual;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean); Virtual;
 
     Function  GetTrackChange() : Boolean; Virtual;
     Procedure SetTrackChange(Const ATrackChange : Boolean); Virtual;
@@ -731,6 +745,26 @@ End;
 Procedure TJSonSettings.SetMakeList(Const AMakeList : Boolean);
 Begin
   B['MakeList'] := AMakeList;
+End;
+
+Function TJSonSettings.GetUseEnumerator() : Boolean;
+Begin
+  Result := B['UseEnumerator'];
+End;
+
+Procedure TJSonSettings.SetUseEnumerator(Const AUseEnumerator : Boolean);
+Begin
+  B['UseEnumerator'] := AUseEnumerator;
+End;
+
+Function TJSonSettings.GetUseNestedClass() : Boolean;
+Begin
+  Result := B['UseNestedClass'];
+End;
+
+Procedure TJSonSettings.SetUseNestedClass(Const AUseNestedClass : Boolean);
+Begin
+  B['UseNestedClass'] := AUseNestedClass;
 End;
 
 Function TJSonSettings.GetTrackChange() : Boolean;

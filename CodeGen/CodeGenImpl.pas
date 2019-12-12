@@ -190,6 +190,8 @@ Type
     FUseStrict      : Boolean;
     FUseCustomClass : Boolean;
     FMakeList       : Boolean;
+    FUseEnumerator  : Boolean;
+    FUseNestedClass : Boolean;
     FTrackChange    : Boolean;
     FDataType       : THsDataSource;
 
@@ -236,6 +238,12 @@ Type
 
     Function  GetMakeList() : Boolean; Virtual;
     Procedure SetMakeList(Const AMakeList : Boolean); Virtual;
+
+    Function  GetUseEnumerator() : Boolean; Virtual;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean); Virtual;
+
+    Function  GetUseNestedClass() : Boolean; Virtual;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean); Virtual;
 
     Function  GetTrackChange() : Boolean; Virtual;
     Procedure SetTrackChange(Const ATrackChange : Boolean); Virtual;
@@ -1069,6 +1077,26 @@ Begin
   FMakeList := AMakeList;
 End;
 
+Function THsClassCodeGenerator.GetUseEnumerator() : Boolean;
+Begin
+  Result := FUseEnumerator;
+End;
+
+Procedure THsClassCodeGenerator.SetUseEnumerator(Const AUseEnumerator : Boolean);
+Begin
+  FUseEnumerator := AUseEnumerator;
+End;
+
+Function THsClassCodeGenerator.GetUseNestedClass() : Boolean;
+Begin
+  Result := FUseNestedClass;
+End;
+
+Procedure THsClassCodeGenerator.SetUseNestedClass(Const AUseNestedClass : Boolean);
+Begin
+  FUseNestedClass := AUseNestedClass;
+End;
+
 Function THsClassCodeGenerator.GetTrackChange() : Boolean;
 Begin
   Result := FTrackChange;
@@ -1167,6 +1195,20 @@ Begin
 
   If FMakeList Then
   Begin
+    If FUseEnumerator And (FDataType = dsNone) Then
+    Begin
+      CreateGUID(lGuidRec.Guid);
+      lGuidRec.Int1 := MagicGuid;
+
+      AList.Add('  I' + FClsName + 'Enumerator = Interface(IInterfaceExEnumerator)');
+      AList.Add('    [''' + GUIDToString(lGuidRec.Guid) + ''']');
+      AList.Add('    Function GetCurrent() : I' + FClsName + ';');
+      AList.Add('    Property Current : I' + FClsName + ' Read GetCurrent;');
+      AList.Add('');
+      AList.Add('  End;');
+      AList.Add('');
+    End;
+
     If FDataType = dsJSon Then
       AList.Add('  I' + FClsName + 's = Interface(ISuperObjectExList)')
     Else If FDataType = dsXML Then
@@ -1198,6 +1240,12 @@ Begin
     End
     Else
     Begin
+      If FUseEnumerator Then
+      Begin
+        AList.Add('    Function  GetEnumerator() : I' + FClsName + 'Enumerator;');
+        AList.Add('');
+      End;
+
       AList.Add('    Function  Get(Index : Integer) : I' + FClsName + ';');
       AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + ');');
       AList.Add('');
@@ -1265,237 +1313,349 @@ Begin
       lProtFunc.Add(FProcedureDefs[X])
     Else If FProcedureDefs[X].ProcedureScope = fsPublic Then
       lPublFunc.Add(FProcedureDefs[X]);
-      
-  lTmpList := TStringList.Create();
-  Try
-    If FUseInterface Or (FDataType In [dsJSon, dsXML]) Then
-    Begin
-      If FInHeritsFrom <> '' Then
-      Begin
-        If FUseCustomClass Then
-          AList.Add('  TCustom' + FClsName + ' = Class(' + FInHeritsFrom + ', I' + FClsName + ')')
-        Else
-          AList.Add('  T' + FClsName + ' = Class(' + FInHeritsFrom + ', I' + FClsName + ')')
-      End
-      Else Case FDataType Of
-        dsJSon :
-        Begin
-          If FUseCustomClass Then
-            AList.Add('  TCustom' + FClsName + ' = Class(TSuperObjectEx, I' + FClsName + ')')
-          Else
-            AList.Add('  T' + FClsName + ' = Class(TSuperObjectEx, I' + FClsName + ')');
-        End;
 
-        dsXML :
-        Begin
-          AList.Add('  T' + FClsName + ' = Class(TXmlNodeEx, I' + FClsName + ')');
-        End;
-
-        Else
-          If FUseCustomClass Then
-            AList.Add('  TCustom' + FClsName + ' = Class(TInterfacedObjectEx, I' + FClsName + ')')
-          Else
-            AList.Add('  T' + FClsName + ' = Class(TInterfacedObjectEx, I' + FClsName + ')');
-      End;
-    End
-    Else
-    Begin
-      If FUseCustomClass Then
-        AList.Add('  TCustom' + FClsName + ' = Class(TPersistent)')
-      Else
-        AList.Add('  T' + FClsName + ' = Class(TPersistent)');
-    End;
-
-    //Variables
-    If Not (FDataType In [dsJSon, dsXML]) Then
-    Begin
+  If FMakeList And FUseNestedClass And (FDataType = dsNone) Then
+  Begin
+    lTmpList := TStringList.Create();
+    Try
+      AList.Add('  T' + FClsName + 'List = Class(TInterfaceListEx, I' + FClsName + 's)');
       If FUseStrict Then
-        AList.Add('  Strict Private')
+        AList.Add('  Strict Private Type')
       Else
-        AList.Add('  Private');
+        AList.Add('  Private Type');
+  (**)
+      If FUseEnumerator Then
+      Begin
+        AList.Add('    T' + FClsName + 'Enumerator = Class(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)');
+        AList.Add('    Protected');
+        AList.Add('      Function GetCurrent() : I' + FClsName + '; OverLoad;');
+        AList.Add('');
+        AList.Add('    End;');
+        AList.Add('');
+      End;
+
+      AList.Add('    T' + FClsName + 'Item = Class(TInterfacedObjectEx, I' + FClsName + ')');
+      If FUseStrict Then
+        AList.Add('    Strict Private')
+      Else
+        AList.Add('    Private');
 
       lTmpList.Clear();
+
+      If FTrackChange Then
+        lTmpList.Add('      FDataState:TDataState;');
+
       For X := 0 To FPropertyDefs.Count - 1 Do
-        lTmpList.Add('    ' + FPropertyDefs.Items[X].GetVariableDefinition());
-    End;
+        lTmpList.Add('      ' + FPropertyDefs.Items[X].GetVariableDefinition());
 
-    If FTrackChange Then
-      lTmpList.Add('    FDataState:TDataState;');
+      If lTmpList.Count > 0 Then
+      Begin
+        AlignVariables(lTmpList);
 
-    AlignVariables(lTmpList);
-    For X := 0 To lTmpList.Count - 1 Do
-      AList.Add(lTmpList[X]);
+        For X := 0 To lTmpList.Count - 1 Do
+          AList.Add(lTmpList[X]);
 
-    For X := 0 To lPrivFunc.Count - 1 Do
-      AList.Add(PadL('', 4) + lPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
 
-    If Not (FDataType In [dsJSon, dsXML]) Or FTrackChange Then
+      AList.Add('    Protected');
+  //-->
+      For X := 0 To FPropertyDefs.Count - 1 Do
+        AList.Add(FPropertyDefs.Items[X].GetPropertyFunctions(True, True, False, False, 3));
+
+      If FTrackChange Then
+      Begin
+        AList.Add('      Procedure Changed();');
+        AList.Add('      Function  GetModified() : Boolean;');
+        AList.Add('');
+      End;
+
+      AList.Add('      Procedure Clear();');
+      AList.Add('      Procedure Assign(ASource : TObject); ReIntroduce; Virtual;');
+
+      If FPropertyDefs.HaveConstructor Or FPropertyDefs.HaveDestructor Then
+      Begin
+        AList.Add('');
+        AList.Add('    Public');
+      End;
+
+      If FPropertyDefs.HaveConstructor Then
+      Begin
+        AList.Add('      Procedure AfterConstruction(); OverRide;');
+        
+        If Not FPropertyDefs.HaveDestructor Then
+          AList.Add('');
+      End;
+
+      If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
+      Begin
+        AList.Add('      Destructor BeforeDestruction(); OverRide;');
+        AList.Add('');
+      End;
+
+      AList.Add('    End;');
       AList.Add('');
-    If Not FUseInterface And FUseStrict Then
-      AList.Add('  Strict Protected')
-    Else
+  (**)
       AList.Add('  Protected');
-
-    For X := 0 To FPropertyDefs.Count - 1 Do
-    Begin
-      If Trim(FPropertyDefs.Items[X].GetPropertyFunctions(
-        FUseInterface Or (FDataType In [dsJSon, dsXML]),
-        FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML]),
-        True, False, 2)) <> '' Then
-        AList.Add(FPropertyDefs.Items[X].GetPropertyFunctions(
-          FUseInterface Or (FDataType In [dsJSon, dsXML]),
-          FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML]),
-          True, False, 2));
-    End;
-
-    If FTrackChange Then
-    Begin
-      AList.Add('    Procedure Changed(); Virtual;');
-      AList.Add('    Function  GetModified() : Boolean;');
-    End;
-    AList.Add('    Procedure Clear();');
-    AList.Add('');
-
-    For X := 0 To lProtFunc.Count - 1 Do
-      AList.Add(PadL('', 4) + lProtFunc[X].GetProcedureDefinition(True));
-
-    If lProtFunc.Count > 0 Then
+      AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
+      AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
       AList.Add('');
-      
-    //If Not (FDataType In [dsJSon, dsXML]) Then
-    Begin
-      If Not FUseCustomClass Then
-        AList.Add('  Published');
-
-      lTmpList.Clear();
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        lTmpList.Add('    ' + FPropertyDefs.Items[X].GetPropertyDefinition(
-          FUseInterface Or (FDataType In [dsJSon, dsXML]),
-          FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML])));
-    End;
-
-    AlignProperties(lTmpList);
-    For X := 0 To lTmpList.Count - 1 Do
-      AList.Add(lTmpList[X]);
-
-    AList.Add('');
-    AList.Add('  Public');
-    If FDataType = dsMSSql Then
-    Begin
-      AList.Add('    Procedure New();');
-      AList.Add(GetLoadParamType('    Procedure Load(AId : %DataType%);'));
-      AList.Add('    Procedure Save();');
-      AList.Add('    Procedure Delete();');
-      AList.Add('    Procedure CreateTable();');
-    End;
-    AList.Add('    Procedure Assign(ASource : TObject); ReIntroduce; Virtual;');
-    AList.Add('');
-
-    For X := 0 To lPublFunc.Count - 1 Do
-      AList.Add(PadL('', 4) + lPublFunc[X].GetProcedureDefinition(True));
-
-    If lPublFunc.Count > 0 Then
+      AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
+      AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + '); OverLoad;');
       AList.Add('');
-
-    If FPropertyDefs.HaveConstructor Then
-    Begin
-      If FDataType In [dsJSon, dsXML] Then
-        AList.Add('    Procedure AfterConstruction(); OverRide;')
-      Else
-        AList.Add('    Constructor Create(); ReIntroduce; Virtual;');
-
-      AList.Add('');
-    End;
-
-    If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
-    Begin
-      AList.Add('    Destructor Destroy(); OverRide;');
-      AList.Add('');
-    End;
-
-    AList.Add('  End;');
-
-    If FUseCustomClass {And Not (FDataType In [dsJSon, dsXML])} Then
-    Begin
-      AList.Add('');
-
-      AList.Add('  T' + FClsName + ' = Class(TCustom' + FClsName + ')');
-      AList.Add('  Published');
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        AList.Add('    Property ' + FPropertyDefs[X].PropertyName + ';');
+      AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
+      AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
       AList.Add('');
       AList.Add('  End;');
+
+      Finally
+        lTmpList.Free();
     End;
-
-    {$Region ' Lists '}
-    If FMakeList Then
-    Begin
-      AList.Add('');
-
-      If FDataType = dsJSon Then
+  End
+  Else
+  Begin
+    lTmpList := TStringList.Create();
+    Try
+      If FUseInterface Or (FDataType In [dsJSon, dsXML]) Then
       Begin
-        AList.Add('  T' + FClsName + 's = Class(TSuperObjectExList, I' + FClsName + 's)');
-        AList.Add('  Protected');
-        AList.Add('    Function GetItemClass() : TSuperObjectExClass; OverRide;');
-        AList.Add('    Function GetItem(Const Index : Integer) : I' + FClsName + '; OverLoad;');
-        AList.Add('');
-        AList.Add('  Public');
-        AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
-        AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
-        AList.Add('');
-        AList.Add('    Property Items[Const Index: Integer] : I' + FClsName + ' Read MyGetItem; Default;');
-        AList.Add('');
-        AList.Add('  End;');
-      End
-      Else If FDataType = dsXML Then
-      Begin
-        AList.Add('  T' + FClsName + 's = Class(TXMLNodeCollectionEx, I' + FClsName + 's)');
-        AList.Add('  Protected');
-        AList.Add('    Function GetItem(Const Index : Integer) : I' + FClsName + ';');
-        AList.Add('');
-        AList.Add('    Function Add() : I' + FClsName + ';');
-        AList.Add('    Function Insert(Const Index : Integer) : I' + FClsName + ';');
-        AList.Add('');
-        AList.Add('  Public');
-        AList.Add('    Procedure AfterConstruction(); OverRide;');
-        AList.Add('');
-        AList.Add('  End;');
-      End
-      Else If FUseInterface Then
-      Begin
-        AList.Add('  T' + FClsName + 's = Class(TInterfaceListEx, I' + FClsName + 's)');
-        AList.Add('  Protected');
-        AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
+        If FInHeritsFrom <> '' Then
+        Begin
+          If FUseCustomClass Then
+            AList.Add('  TCustom' + FClsName + ' = Class(' + FInHeritsFrom + ', I' + FClsName + ')')
+          Else
+            AList.Add('  T' + FClsName + ' = Class(' + FInHeritsFrom + ', I' + FClsName + ')')
+        End
+        Else Case FDataType Of
+          dsJSon :
+          Begin
+            If FUseCustomClass Then
+              AList.Add('  TCustom' + FClsName + ' = Class(TSuperObjectEx, I' + FClsName + ')')
+            Else
+              AList.Add('  T' + FClsName + ' = Class(TSuperObjectEx, I' + FClsName + ')');
+          End;
 
-        AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
-        AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + '); OverLoad;');
-        AList.Add('');
-        AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
-        AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
-        AList.Add('');
-        AList.Add('  End;');
+          dsXML :
+          Begin
+            AList.Add('  T' + FClsName + ' = Class(TXmlNodeEx, I' + FClsName + ')');
+          End;
+
+          Else
+            If FUseCustomClass Then
+              AList.Add('  TCustom' + FClsName + ' = Class(TInterfacedObjectEx, I' + FClsName + ')')
+            Else
+              AList.Add('  T' + FClsName + ' = Class(TInterfacedObjectEx, I' + FClsName + ')');
+        End;
       End
       Else
       Begin
-        AList.Add('  T' + FClsName + 's = Class(TObjectList)');
-        AList.Add('  Protected');
-        AList.Add('    Function  GetItem(Index : Integer) : T' + FClsName + ';');
-        AList.Add('    Procedure SetItem(Index : Integer; Const Item: T' + FClsName + ');');
+        If FUseCustomClass Then
+          AList.Add('  TCustom' + FClsName + ' = Class(TPersistent)')
+        Else
+          AList.Add('  T' + FClsName + ' = Class(TPersistent)');
+      End;
+
+      //Variables
+      If Not (FDataType In [dsJSon, dsXML]) Then
+      Begin
+        If FUseStrict Then
+          AList.Add('  Strict Private')
+        Else
+          AList.Add('  Private');
+
+        lTmpList.Clear();
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          lTmpList.Add('    ' + FPropertyDefs.Items[X].GetVariableDefinition());
+      End;
+
+      If FTrackChange Then
+        lTmpList.Add('    FDataState:TDataState;');
+
+      AlignVariables(lTmpList);
+      For X := 0 To lTmpList.Count - 1 Do
+        AList.Add(lTmpList[X]);
+
+      For X := 0 To lPrivFunc.Count - 1 Do
+        AList.Add(PadL('', 4) + lPrivFunc[X].GetProcedureDefinition(True));
+
+      If Not (FDataType In [dsJSon, dsXML]) Or FTrackChange Then
         AList.Add('');
-        AList.Add('  Public');
-        AList.Add('    Property Items[Index : Integer] : T' + FClsName + ' Read GetItem Write SetItem; Default;');
+      If Not FUseInterface And FUseStrict Then
+        AList.Add('  Strict Protected')
+      Else
+        AList.Add('  Protected');
+
+      For X := 0 To FPropertyDefs.Count - 1 Do
+      Begin
+        If Trim(FPropertyDefs.Items[X].GetPropertyFunctions(
+          FUseInterface Or (FDataType In [dsJSon, dsXML]),
+          FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML]),
+          True, False, 2)) <> '' Then
+          AList.Add(FPropertyDefs.Items[X].GetPropertyFunctions(
+            FUseInterface Or (FDataType In [dsJSon, dsXML]),
+            FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML]),
+            True, False, 2));
+      End;
+
+      If FTrackChange Then
+      Begin
+        AList.Add('    Procedure Changed(); Virtual;');
+        AList.Add('    Function  GetModified() : Boolean;');
+      End;
+      AList.Add('    Procedure Clear();');
+      AList.Add('');
+
+      For X := 0 To lProtFunc.Count - 1 Do
+        AList.Add(PadL('', 4) + lProtFunc[X].GetProcedureDefinition(True));
+
+      If lProtFunc.Count > 0 Then
+        AList.Add('');
+      
+      //If Not (FDataType In [dsJSon, dsXML]) Then
+      Begin
+        If Not FUseCustomClass Then
+          AList.Add('  Published');
+
+        lTmpList.Clear();
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          lTmpList.Add('    ' + FPropertyDefs.Items[X].GetPropertyDefinition(
+            FUseInterface Or (FDataType In [dsJSon, dsXML]),
+            FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML])));
+      End;
+
+      AlignProperties(lTmpList);
+      For X := 0 To lTmpList.Count - 1 Do
+        AList.Add(lTmpList[X]);
+
+      AList.Add('');
+      AList.Add('  Public');
+      If FDataType = dsMSSql Then
+      Begin
+        AList.Add('    Procedure New();');
+        AList.Add(GetLoadParamType('    Procedure Load(AId : %DataType%);'));
+        AList.Add('    Procedure Save();');
+        AList.Add('    Procedure Delete();');
+        AList.Add('    Procedure CreateTable();');
+      End;
+      AList.Add('    Procedure Assign(ASource : TObject); ReIntroduce; Virtual;');
+      AList.Add('');
+
+      For X := 0 To lPublFunc.Count - 1 Do
+        AList.Add(PadL('', 4) + lPublFunc[X].GetProcedureDefinition(True));
+
+      If lPublFunc.Count > 0 Then
+        AList.Add('');
+
+      If FPropertyDefs.HaveConstructor Then
+      Begin
+        If FDataType In [dsJSon, dsXML] Then
+          AList.Add('    Procedure AfterConstruction(); OverRide;')
+        Else
+          AList.Add('    Constructor Create(); ReIntroduce; Virtual;');
+
+        AList.Add('');
+      End;
+
+      If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
+      Begin
+        AList.Add('    Destructor Destroy(); OverRide;');
+        AList.Add('');
+      End;
+
+      AList.Add('  End;');
+
+      If FUseCustomClass {And Not (FDataType In [dsJSon, dsXML])} Then
+      Begin
+        AList.Add('');
+
+        AList.Add('  T' + FClsName + ' = Class(TCustom' + FClsName + ')');
+        AList.Add('  Published');
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          AList.Add('    Property ' + FPropertyDefs[X].PropertyName + ';');
         AList.Add('');
         AList.Add('  End;');
       End;
+
+      {$Region ' Lists '}
+      If FMakeList Then
+      Begin
+        If FUseEnumerator And (FDataType = dsNone) Then
+        Begin
+          AList.Add('');
+          AList.Add('  T' + FClsName + 'Enumerator = Class(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetCurrent() : I' + FClsName + '; OverLoad;');
+          AList.Add('');
+          AList.Add('  End;');
+        End;
+
+        AList.Add('');
+
+        If FDataType = dsJSon Then
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TSuperObjectExList, I' + FClsName + 's)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetItemClass() : TSuperObjectExClass; OverRide;');
+          AList.Add('    Function GetItem(Const Index : Integer) : I' + FClsName + '; OverLoad;');
+          AList.Add('');
+          AList.Add('  Public');
+          AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
+          AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
+          AList.Add('');
+          AList.Add('    Property Items[Const Index: Integer] : I' + FClsName + ' Read MyGetItem; Default;');
+          AList.Add('');
+          AList.Add('  End;');
+        End
+        Else If FDataType = dsXML Then
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TXMLNodeCollectionEx, I' + FClsName + 's)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetItem(Const Index : Integer) : I' + FClsName + ';');
+          AList.Add('');
+          AList.Add('    Function Add() : I' + FClsName + ';');
+          AList.Add('    Function Insert(Const Index : Integer) : I' + FClsName + ';');
+          AList.Add('');
+          AList.Add('  Public');
+          AList.Add('    Procedure AfterConstruction(); OverRide;');
+          AList.Add('');
+          AList.Add('  End;');
+        End
+        Else If FUseInterface Then
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TInterfaceListEx, I' + FClsName + 's)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
+          AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
+
+          AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
+          AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + '); OverLoad;');
+          AList.Add('');
+          AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
+          AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
+          AList.Add('');
+          AList.Add('  End;');
+        End
+        Else
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TObjectList)');
+          AList.Add('  Protected');
+          AList.Add('    Function  GetItem(Index : Integer) : T' + FClsName + ';');
+          AList.Add('    Procedure SetItem(Index : Integer; Const Item: T' + FClsName + ');');
+          AList.Add('');
+          AList.Add('  Public');
+          AList.Add('    Property Items[Index : Integer] : T' + FClsName + ' Read GetItem Write SetItem; Default;');
+          AList.Add('');
+          AList.Add('  End;');
+        End;
+      End;
+      {$EndRegion}
+
+      Finally
+        lTmpList.Free();
+
+        lPrivFunc := Nil;
+        lProtFunc := Nil;
+        lPublFunc := Nil;
     End;
-    {$EndRegion}
-
-    Finally
-      lTmpList.Free();
-
-      lPrivFunc := Nil;
-      lProtFunc := Nil;
-      lPublFunc := Nil;
   End;
 End;
 
@@ -1506,425 +1666,502 @@ Var lClsName : String;
 Begin
   lTmpList := TStringList.Create();
   Try
-    If FUseCustomClass Then
-      lClsName := 'Custom';
-    lClsName := lClsName + FClsName;
-
-    {$Region ' Constructor / Destructor '}
-    If FPropertyDefs.HaveConstructor Then
+//    If FMakeList And FUseNestedClass And (FDataType = dsNone) Then
+//      If FUseEnumerator Then
+//      Begin
+//        AList.Add('Function T' + FClsName + 'List.T' + FClsName + 'Enumerator.GetCurrent() : I' + FClsName + ';');
+//        AList.Add('Begin');
+//        AList.Add('  Result := InHerited Current As I' + FClsName +  ';');
+//        AList.Add('End;');
+//      End;
+    If FMakeList And FUseNestedClass Then
     Begin
-      If FDataType In [dsJSon, dsXML] Then
+      FUseCustomClass := False;
+      FUseInterface   := True;
+      FDataType       := dsNone;
+    End;
+
+    Begin
+      If FUseCustomClass Then
+        lClsName := 'Custom';
+      lClsName := lClsName + FClsName;
+
+      {$Region ' Constructor / Destructor '}
+      If FPropertyDefs.HaveConstructor Then
       Begin
-        AList.Add('Procedure T' + lClsName + '.AfterConstruction();');
+        If (FDataType In [dsJSon, dsXML]) Or FUseNestedClass Then
+        Begin
+          If FUseNestedClass Then
+            AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.AfterConstruction();')
+          Else
+            AList.Add('Procedure T' + lClsName + '.AfterConstruction();');
+          AList.Add('Begin');
+          AList.Add('  InHerited AfterConstruction();');
+        End
+        Else
+        Begin
+          AList.Add('Constructor T' + lClsName + '.Create();');
+          AList.Add('Begin');
+          AList.Add('  InHerited Create();');
+        End;
+
+        AList.Add('');
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          Case FPropertyDefs[X].PropertyType Of
+            ptObject :
+              lTmpList.Add('  F' +
+                FPropertyDefs[X].PropertyName + ':=' +
+                FPropertyDefs[X].PropertyClass + '.Create();');
+            ptInterface :
+            Begin
+              If FDataType = dsJSon Then
+              Begin
+                lTmpList.Add('  O[''' +
+                  FPropertyDefs[X].PropertyName + ''']:=' +
+                  FPropertyDefs[X].InterfaceImplementor +
+                  '.Create() As ' + FPropertyDefs[X].InterfaceName + ';');
+              End
+              Else If FDataType <> dsXML Then
+                lTmpList.Add('  F' +
+                  FPropertyDefs[X].PropertyName + ':=' +
+                  FPropertyDefs[X].InterfaceImplementor + '.Create();');
+            End;
+          End;
+
+        AlignVariableAssign(lTmpList);
+        For X := 0 To lTmpList.Count - 1 Do
+          AList.Add(lTmpList[X]);
+
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          Case FPropertyDefs[X].PropertyType Of
+            ptObject : ;
+
+            ptInterface :
+            Begin
+              If FDataType In [dsXML, dsJSon] Then
+                AList.Add('  RegisterChildNode(''' + FPropertyDefs[X].PropertyName + ''', ' + FPropertyDefs[X].InterfaceImplementor + ');');
+            End;
+          End;
+        AList.Add('End;');
+        AList.Add('');
+      End;
+
+      If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
+      Begin
+        If FUseNestedClass Then
+          AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.BeforeDestruction();')
+        Else
+          AList.Add('Destructor T' + lClsName + '.Destroy();');
         AList.Add('Begin');
-        AList.Add('  InHerited AfterConstruction();');
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          Case FPropertyDefs[X].PropertyType Of
+            ptObject :
+              AList.Add('  FreeAndNil(F' +
+                FPropertyDefs[X].PropertyName + ');');
+
+            ptInterface :
+            Begin
+              Case FDataType Of
+                dsJSon :
+                Begin
+                  AList.Add('  O[''' +
+                    FPropertyDefs[X].PropertyName + '''] := Nil;');
+                End
+                Else
+                  AList.Add('  F' +
+                    FPropertyDefs[X].PropertyName + ' := Nil;');
+              End;
+            End;
+          End;
+        AList.Add('');
+
+        If FUseNestedClass Then
+          AList.Add('  InHerited BeforeDestruction();')
+        Else
+          AList.Add('  InHerited Destroy();');
+        AList.Add('End;');
+        AList.Add('');
+      End;
+      {$EndRegion}
+
+      If FTrackChange Then
+      Begin
+        If FUseNestedClass Then
+          AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Changed();')
+        Else
+          AList.Add('Procedure T' + lClsName + '.Changed();');
+
+        AList.Add('Begin');
+        AList.Add('  Case FDataState Of');
+        AList.Add('    edsBrowse : FDataState := edsModified;');
+        AList.Add('  End;');
+        AList.Add('End;');
+        AList.Add('');
+
+        If FUseNestedClass Then
+          AList.Add('Function T' + FClsName + 'List.T' + FClsName + 'Item.GetModified() : Boolean;')
+        Else
+          AList.Add('Function T' + lClsName + '.GetModified() : Boolean;');
+        AList.Add('Begin');
+        AList.Add('  Result := FDataState <> edsBrowse;');
+        AList.Add('End;');
+        AList.Add('');
+      End;
+
+      lTmpList.Clear();
+      If FUseNestedClass Then
+        AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Clear();')
+      Else
+        AList.Add('Procedure T' + lClsName + '.Clear();');
+
+      AList.Add('Begin');
+      If FDataType = dsJSon Then
+      Begin
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          Case FPropertyDefs[X].PropertyType Of
+            ptByte, ptInteger, ptSingle : lTmpList.Add('I[''' + FPropertyDefs[X].PropertyName + ''']:=0;');
+            ptDouble, ptExtended : lTmpList.Add('D[''' + FPropertyDefs[X].PropertyName + ''']:=0;');
+            ptCurrency : lTmpList.Add('C[''' + FPropertyDefs[X].PropertyName + ''']:=0;');
+            ptDate, ptTime, ptDateTime : ;
+            ptChar, ptString, ptWideString : lTmpList.Add('S[''' + FPropertyDefs[X].PropertyName + ''']:='''';');
+            ptBoolean : lTmpList.Add('B[''' + FPropertyDefs[X].PropertyName + ''']:=False;');
+            ptObject :
+              lTmpList.Add('O[''' + FPropertyDefs[X].PropertyName + ''']:=' +
+                FPropertyDefs[X].PropertyClass + '.Create();');
+            ptInterface :
+              lTmpList.Add('O[''' + FPropertyDefs[X].PropertyName + ''']:=' +
+                FPropertyDefs[X].InterfaceImplementor + '.Create() As ' +
+                FPropertyDefs[X].InterfaceName + ';'
+              );
+          End;
+      End
+      Else If FDataType = dsXML Then
+      Begin
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          lTmpList.Add('ChildNodes[''' + FPropertyDefs[X].PropertyName + '''].NodeValue:=Null;');
       End
       Else
       Begin
-        AList.Add('Constructor T' + lClsName + '.Create();');
-        AList.Add('Begin');
-        AList.Add('  InHerited Create();');
-      End;
-
-      AList.Add('');
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        Case FPropertyDefs[X].PropertyType Of
-          ptObject :
-            lTmpList.Add('  F' +
-              FPropertyDefs[X].PropertyName + ':=' +
-              FPropertyDefs[X].PropertyClass + '.Create();');
-          ptInterface :
-          Begin
-            If FDataType = dsJSon Then
-            Begin
-              lTmpList.Add('  O[''' +
-                FPropertyDefs[X].PropertyName + ''']:=' +
-                FPropertyDefs[X].InterfaceImplementor +
-                '.Create() As ' + FPropertyDefs[X].InterfaceName + ';');
-            End
-            Else If FDataType <> dsXML Then
-              lTmpList.Add('  F' +
-                FPropertyDefs[X].PropertyName + ':=' +
-                FPropertyDefs[X].InterfaceImplementor + '.Create();');
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          Case FPropertyDefs[X].PropertyType Of
+            ptByte, ptInteger, ptSingle,
+            ptDouble, ptExtended, ptCurrency,
+            ptDate, ptTime, ptDateTime,
+            ptWord, ptDWord, ptQWord : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=0;');
+            ptChar : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=#0;');
+            ptString, ptWideString : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':='''';');
+            ptBoolean : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=False;');
           End;
-        End;
+      End;
 
       AlignVariableAssign(lTmpList);
       For X := 0 To lTmpList.Count - 1 Do
         AList.Add(lTmpList[X]);
 
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        Case FPropertyDefs[X].PropertyType Of
-          ptObject : ;
-
-          ptInterface :
-          Begin
-            If FDataType In [dsXML, dsJSon] Then
-              AList.Add('  RegisterChildNode(''' + FPropertyDefs[X].PropertyName + ''', ' + FPropertyDefs[X].InterfaceImplementor + ');');
-          End;
-        End;
       AList.Add('End;');
       AList.Add('');
-    End;
-
-    If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
-    Begin
-      AList.Add('Destructor T' + lClsName + '.Destroy();');
-      AList.Add('Begin');
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        Case FPropertyDefs[X].PropertyType Of
-          ptObject :
-            AList.Add('  FreeAndNil(F' +
-              FPropertyDefs[X].PropertyName + ');');
-
-          ptInterface :
-          Begin
-            Case FDataType Of
-              dsJSon :
-              Begin
-                AList.Add('  O[''' +
-                  FPropertyDefs[X].PropertyName + '''] := Nil;');
-              End
-              Else
-                AList.Add('  F' +
-                  FPropertyDefs[X].PropertyName + ' := Nil;');
-            End;
-          End;
-        End;
-      AList.Add('');
-      AList.Add('  InHerited Destroy();');
-      AList.Add('End;');
-      AList.Add('');
-    End;
-    {$EndRegion}
-
-    If FTrackChange Then
-    Begin
-      AList.Add('Procedure T' + lClsName + '.Changed();');
-      AList.Add('Begin');
-      AList.Add('  Case FDataState Of');
-      AList.Add('    edsBrowse : FDataState := edsModified;');
-      AList.Add('  End;');
-      AList.Add('End;');
-      AList.Add('');
-
-      AList.Add('Function T' + lClsName + '.GetModified() : Boolean;');
-      AList.Add('Begin');
-      AList.Add('  Result := FDataState <> edsBrowse;');
-      AList.Add('End;');
-      AList.Add('');
-    End;
-
-    lTmpList.Clear();
-    AList.Add('Procedure T' + lClsName + '.Clear();');
-    AList.Add('Begin');
-    If FDataType = dsJSon Then
-    Begin
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        Case FPropertyDefs[X].PropertyType Of
-          ptByte, ptInteger, ptSingle : lTmpList.Add('I[''' + FPropertyDefs[X].PropertyName + ''']:=0;');
-          ptDouble, ptExtended : lTmpList.Add('D[''' + FPropertyDefs[X].PropertyName + ''']:=0;');
-          ptCurrency : lTmpList.Add('C[''' + FPropertyDefs[X].PropertyName + ''']:=0;');
-          ptDate, ptTime, ptDateTime : ;
-          ptChar, ptString, ptWideString : lTmpList.Add('S[''' + FPropertyDefs[X].PropertyName + ''']:='''';');
-          ptBoolean : lTmpList.Add('B[''' + FPropertyDefs[X].PropertyName + ''']:=False;');
-          ptObject :
-            lTmpList.Add('O[''' + FPropertyDefs[X].PropertyName + ''']:=' +
-              FPropertyDefs[X].PropertyClass + '.Create();');
-          ptInterface :
-            lTmpList.Add('O[''' + FPropertyDefs[X].PropertyName + ''']:=' +
-              FPropertyDefs[X].InterfaceImplementor + '.Create() As ' +
-              FPropertyDefs[X].InterfaceName + ';'
-            );
-        End;
-    End
-    Else If FDataType = dsXML Then
-    Begin
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        lTmpList.Add('ChildNodes[''' + FPropertyDefs[X].PropertyName + '''].NodeValue:=Null;');
-    End
-    Else
-    Begin
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        Case FPropertyDefs[X].PropertyType Of
-          ptByte, ptInteger, ptSingle,
-          ptDouble, ptExtended, ptCurrency,
-          ptDate, ptTime, ptDateTime,
-          ptWord, ptDWord, ptQWord : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=0;');
-          ptChar : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=#0;');
-          ptString, ptWideString : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':='''';');
-          ptBoolean : lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=False;');
-        End;
-    End;
-
-    AlignVariableAssign(lTmpList);
-    For X := 0 To lTmpList.Count - 1 Do
-      AList.Add(lTmpList[X]);
-
-    AList.Add('End;');
-    AList.Add('');
     
-    {$Region ' MsSql Procs '}
-    If FDataType In [dsMSSql] Then
-    Begin
-      AList.Add('Procedure T' + lClsName + '.New();');
-      AList.Add('Begin');
-      AList.Add('  Clear();');
-      If FTrackChange Then
-        AList.Add('  FDataState := edsAdded;');
-      AList.Add('End;');
-      AList.Add('');
+      {$Region ' MsSql Procs '}
+      If FDataType In [dsMSSql] Then
+      Begin
+        AList.Add('Procedure T' + lClsName + '.New();');
+        AList.Add('Begin');
+        AList.Add('  Clear();');
+        If FTrackChange Then
+          AList.Add('  FDataState := edsAdded;');
+        AList.Add('End;');
+        AList.Add('');
 
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        If FPropertyDefs[X].IsId Then
-        Begin
-          Case FPropertyDefs[X].PropertyType Of
-            ptInteger : AList.Add('Procedure T' + lClsName + '.Load(AId : Integer);');
-            ptString  : AList.Add('Procedure T' + lClsName + '.Load(AId : String);');
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          If FPropertyDefs[X].IsId Then
+          Begin
+            Case FPropertyDefs[X].PropertyType Of
+              ptInteger : AList.Add('Procedure T' + lClsName + '.Load(AId : Integer);');
+              ptString  : AList.Add('Procedure T' + lClsName + '.Load(AId : String);');
+            End;
+
+            Break;
           End;
 
-          Break;
+  //      AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
+        AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
+        AList.Add('Begin');
+        lTmpList.Clear();
+        If FDataType = dsMSSql Then
+        Begin
+          GenerateMSSqlLoadCode(lTmpList);
+          For X := 0 To lTmpList.Count - 1 Do
+            AList.Add(lTmpList[X]);
         End;
+        AList.Add('End;');
+        AList.Add('');
 
-//      AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
-      AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
-      AList.Add('Begin');
-      lTmpList.Clear();
-      If FDataType = dsMSSql Then
-      Begin
-        GenerateMSSqlLoadCode(lTmpList);
-        For X := 0 To lTmpList.Count - 1 Do
-          AList.Add(lTmpList[X]);
-      End;
-      AList.Add('End;');
-      AList.Add('');
-
-      AList.Add('Procedure T' + lClsName + '.Save();');
-      AList.Add('Begin');
-      lTmpList.Clear();
-      If FDataType = dsMSSql Then
-      Begin
-        GenerateMSSqlSaveCode(lTmpList);
-        For X := 0 To lTmpList.Count - 1 Do
-          AList.Add(lTmpList[X]);
-      End;
-      AList.Add('End;');
-      AList.Add('');
-
-      AList.Add('Procedure T' + lClsName + '.Delete();');
-      AList.Add('Begin');
-      AList.Add('  FDataState := edsDeleted;');
-      AList.Add('End;');
-      AList.Add('');
-
-      AList.Add('Procedure T' + lClsName + '.CreateTable();');
-      AList.Add('Begin');
-      lTmpList.Clear();
-      If FDataType = dsMSSql Then
-      Begin
-        GenerateMSSqlCreateTableCode(lTmpList);
-        For X := 0 To lTmpList.Count - 1 Do
-          AList.Add(lTmpList[X]);
-      End;
-      AList.Add('End;');
-      AList.Add('');
-    End;
-    {$EndRegion}
-
-    AList.Add('Procedure T' + lClsName + '.Assign(ASource : TObject);');
-
-    lTmpList.Clear();
-    If FDataType In [dsJSon] Then
-    Begin
-      lTmpList.Add('Var lSrc:T' + lClsName + ';');
-    End
-    Else
-    Begin
-      lTmpList.Add('Var lSrc:T' + lClsName + ';');
-      If FDataType = dsMSSql Then
-        lTmpList.Add('    lFields:TFields;');
-    End;
-
-    AlignVariables(lTmpList);
-    For X := 0 To lTmpList.Count - 1 Do
-      AList.Add(lTmpList[X]);
-
-    AList.Add('Begin');
-    AList.Add('  If ASource Is T' + lClsName + ' Then');
-    AList.Add('  Begin');
-    AList.Add('    lSrc := T' + lClsName + '(ASource);');
-    AList.Add('');
-
-    If FDataType = dsJSon Then
-    Begin
-      lTmpList.Clear();
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        Case FPropertyDefs[X].PropertyType Of
-          ptByte, ptInteger, ptSingle : lTmpList.Add('I[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
-          ptDouble, ptExtended : lTmpList.Add('D[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
-          ptCurrency : lTmpList.Add('C[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
-          ptDate, ptTime, ptDateTime : ;
-          ptChar, ptString, ptWideString : lTmpList.Add('S[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
-          ptBoolean : lTmpList.Add('B[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+        AList.Add('Procedure T' + lClsName + '.Save();');
+        AList.Add('Begin');
+        lTmpList.Clear();
+        If FDataType = dsMSSql Then
+        Begin
+          GenerateMSSqlSaveCode(lTmpList);
+          For X := 0 To lTmpList.Count - 1 Do
+            AList.Add(lTmpList[X]);
         End;
-    End
-    Else If FDataType = dsXML Then
-    Begin
-      lTmpList.Clear();
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        lTmpList.Add('ChildNodes[''' + FPropertyDefs[X].PropertyName + '''].NodeValue:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
-    End
-    Else
-    Begin
-      lTmpList.Clear();
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=lSrc.' + FPropertyDefs[X].PropertyName + ';');
-    End;
+        AList.Add('End;');
+        AList.Add('');
 
-    AlignVariableAssign(lTmpList);
-    For X := 0 To lTmpList.Count - 1 Do
-      AList.Add('  ' + lTmpList[X]);
-    AList.Add('  End');
+        AList.Add('Procedure T' + lClsName + '.Delete();');
+        AList.Add('Begin');
+        AList.Add('  FDataState := edsDeleted;');
+        AList.Add('End;');
+        AList.Add('');
 
-    If FDataType = dsMSSql Then
-    Begin
-      AList.Add('  Else If ASource Is TFields Then');
+        AList.Add('Procedure T' + lClsName + '.CreateTable();');
+        AList.Add('Begin');
+        lTmpList.Clear();
+        If FDataType = dsMSSql Then
+        Begin
+          GenerateMSSqlCreateTableCode(lTmpList);
+          For X := 0 To lTmpList.Count - 1 Do
+            AList.Add(lTmpList[X]);
+        End;
+        AList.Add('End;');
+        AList.Add('');
+      End;
+      {$EndRegion}
+
+      If FUseNestedClass Then
+        AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Assign(ASource : TObject);')
+      Else
+        AList.Add('Procedure T' + lClsName + '.Assign(ASource : TObject);');
+
+      lTmpList.Clear();
+      If FDataType In [dsJSon] Then
+      Begin
+        lTmpList.Add('Var lSrc:T' + lClsName + ';');
+      End
+      Else
+      Begin
+        lTmpList.Add('Var lSrc:T' + lClsName + ';');
+        If FDataType = dsMSSql Then
+          lTmpList.Add('    lFields:TFields;');
+      End;
+
+      AlignVariables(lTmpList);
+      For X := 0 To lTmpList.Count - 1 Do
+        AList.Add(lTmpList[X]);
+
+      AList.Add('Begin');
+      AList.Add('  If ASource Is T' + lClsName + ' Then');
       AList.Add('  Begin');
-      AList.Add('    lFields := TFields(ASource);');
+      AList.Add('    lSrc := T' + lClsName + '(ASource);');
       AList.Add('');
-      lTmpList.Clear();
-      For X := 0 To FPropertyDefs.Count - 1 Do
-        If FPropertyDefs[X].IsDataAware Then
-          lTmpList.Add( 'F' + FPropertyDefs[X].PropertyName +
-                        ':=lFields.FieldByName(''' +
-                        FPropertyDefs[X].FieldName + ''').' +
-                        GetFieldAssignType(FPropertyDefs[X].PropertyType) + ';');
+
+      If FDataType = dsJSon Then
+      Begin
+        lTmpList.Clear();
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          Case FPropertyDefs[X].PropertyType Of
+            ptByte, ptInteger, ptSingle : lTmpList.Add('I[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+            ptDouble, ptExtended : lTmpList.Add('D[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+            ptCurrency : lTmpList.Add('C[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+            ptDate, ptTime, ptDateTime : ;
+            ptChar, ptString, ptWideString : lTmpList.Add('S[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+            ptBoolean : lTmpList.Add('B[''' + FPropertyDefs[X].PropertyName + ''']:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+          End;
+      End
+      Else If FDataType = dsXML Then
+      Begin
+        lTmpList.Clear();
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          lTmpList.Add('ChildNodes[''' + FPropertyDefs[X].PropertyName + '''].NodeValue:=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+      End
+      Else
+      Begin
+        lTmpList.Clear();
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          lTmpList.Add('F' + FPropertyDefs[X].PropertyName + ':=lSrc.' + FPropertyDefs[X].PropertyName + ';');
+      End;
 
       AlignVariableAssign(lTmpList);
       For X := 0 To lTmpList.Count - 1 Do
         AList.Add('  ' + lTmpList[X]);
       AList.Add('  End');
-    End;
-    AList.Add('  Else'); //EConvertError -> SysUtils, SAssignError -> RTLConst
-    AList.Add('    Raise EConvertError.CreateResFmt(@SAssignError, [ASource.ClassName, ClassName]);');
-    AList.Add('End;');
-    AList.Add('');
 
-    For X := 0 To FProcedureDefs.Count - 1 Do
-    Begin
-      AList.Add(StringReplace(FProcedureDefs[X].GetProcedureDefinition(False), '%ClassName%', lClsName, [rfReplaceAll, rfIgnoreCase]));
-      AList.Add(FProcedureDefs[X].ProcedureImpl.Text);
-    End;
+      If FDataType = dsMSSql Then
+      Begin
+        AList.Add('  Else If ASource Is TFields Then');
+        AList.Add('  Begin');
+        AList.Add('    lFields := TFields(ASource);');
+        AList.Add('');
+        lTmpList.Clear();
+        For X := 0 To FPropertyDefs.Count - 1 Do
+          If FPropertyDefs[X].IsDataAware Then
+            lTmpList.Add( 'F' + FPropertyDefs[X].PropertyName +
+                          ':=lFields.FieldByName(''' +
+                          FPropertyDefs[X].FieldName + ''').' +
+                          GetFieldAssignType(FPropertyDefs[X].PropertyType) + ';');
 
-    lTmpList.Clear();
-    For X := 0 To FPropertyDefs.Count - 1 Do
-      If Trim(FPropertyDefs.Items[X].GetPropertyFunctionImplementation(
-        FUseInterface Or (FDataType In [dsJSon, dsXml]),
-        FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXml]),
-        FTrackChange, FDataType)) <> '' Then
-        lTmpList.Add(StringReplace(FPropertyDefs.Items[X].GetPropertyFunctionImplementation(
+        AlignVariableAssign(lTmpList);
+        For X := 0 To lTmpList.Count - 1 Do
+          AList.Add('  ' + lTmpList[X]);
+        AList.Add('  End');
+      End;
+      AList.Add('  Else'); //EConvertError -> SysUtils, SAssignError -> RTLConst
+      AList.Add('    Raise EConvertError.CreateResFmt(@SAssignError, [ASource.ClassName, ClassName]);');
+      AList.Add('End;');
+      AList.Add('');
+
+      For X := 0 To FProcedureDefs.Count - 1 Do
+      Begin
+        If FUseNestedClass Then
+          AList.Add(StringReplace(FProcedureDefs[X].GetProcedureDefinition(False), '%ClassName%', 'T' + FClsName + 'List.T' + FClsName + 'Item', [rfReplaceAll, rfIgnoreCase]))
+        Else
+          AList.Add(StringReplace(FProcedureDefs[X].GetProcedureDefinition(False), '%ClassName%', lClsName, [rfReplaceAll, rfIgnoreCase]));
+        AList.Add(FProcedureDefs[X].ProcedureImpl.Text);
+      End;
+
+      lTmpList.Clear();
+      For X := 0 To FPropertyDefs.Count - 1 Do
+        If Trim(FPropertyDefs.Items[X].GetPropertyFunctionImplementation(
           FUseInterface Or (FDataType In [dsJSon, dsXml]),
           FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXml]),
-          FTrackChange, FDataType), '%ClassName%', lClsName, [rfReplaceAll, rfIgnoreCase]));
+          FTrackChange, FDataType)) <> '' Then
+          If FUseNestedClass Then
+            lTmpList.Add(StringReplace(FPropertyDefs.Items[X].GetPropertyFunctionImplementation(
+              FUseInterface Or (FDataType In [dsJSon, dsXml]),
+              FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXml]),
+              FTrackChange, FDataType), '%ClassName%', FClsName + 'List.T' + FClsName + 'Item', [rfReplaceAll, rfIgnoreCase]))
+          Else
+            lTmpList.Add(StringReplace(FPropertyDefs.Items[X].GetPropertyFunctionImplementation(
+              FUseInterface Or (FDataType In [dsJSon, dsXml]),
+              FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXml]),
+              FTrackChange, FDataType), '%ClassName%', lClsName, [rfReplaceAll, rfIgnoreCase]));
 
-    //AddFormat
-    For X := 0 To lTmpList.Count - 1 Do
-      AList.Add(lTmpList[X]);
+      //AddFormat
+      For X := 0 To lTmpList.Count - 1 Do
+        AList.Add(lTmpList[X]);
 
-    {$Region ' Lists '}
-    If FMakeList Then
-    Begin
-      If FDataType = dsJSon Then
+      {$Region ' Lists '}
+      If FMakeList Then
       Begin
-        AList.Add('Function T' + FClsName + 's.Add() : I' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := T' + FClsName + '.Create(stObject);');
-        AList.Add('  InHerited Add(Result);');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.Add(Const AItem : I' + FClsName + ') : Integer;');
-        AList.Add('Begin');
-        AList.Add('  Result := InHerited Add(AItem);');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.GetItemClass() : TSuperObjectExClass;');
-        AList.Add('Begin');
-        AList.Add('  Result := T' + FClsName + ';');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.GetItem(Const Index : Integer) : I' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := InHerited Items[Index] As I' + FClsName + ';');
-        AList.Add('End;');
-      End
-      Else If FDataType = dsXML Then
-      Begin
-        AList.Add('Procedure T' + FClsName + 's.AfterConstruction();');
-        AList.Add('Begin');
-        AList.Add('  RegisterChildNode(''' + FClsName + ''', T' + FClsName + ');');
-        AList.Add('  ItemTag       := ''' + FClsName + ''';');
-        AList.Add('  ItemInterface := I' + FClsName + ';');
-        AList.Add('');
-        AList.Add('  InHerited AfterConstruction();');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.GetItem(Const Index : Integer) : I' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := List[Index] As I' + FClsName  + ';');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.Add() : I' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := AddItem(-1) As I' + FClsName + ';');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.Insert(Const Index : Integer) : I' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := AddItem(Index) As I' + FClsName + ';');
-        AList.Add('End;');
-      End
-      Else If FUseInterface Then
-      Begin
-        AList.Add('Function T' + FClsName + 's.GetItemClass() : TInterfacedObjectExClass;');
-        AList.Add('Begin');
-        AList.Add('  Result := T' + FClsName + ';');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.Get(Index : Integer) : I' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := InHerited Items[Index] As I' + FClsName + ';');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Procedure T' + FClsName + 's.Put(Index : Integer; Const Item : I' + FClsName + ');');
-        AList.Add('Begin');
-        AList.Add('  InHerited Items[Index] := Item;');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.Add() : I' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := InHerited Add() As I' + FClsName + ';');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Function T' + FClsName + 's.Add(Const AItem : I' + FClsName + ') : Integer;');
-        AList.Add('Begin');
-        AList.Add('  Result := InHerited Add(AItem);');
-        AList.Add('End;');
-        AList.Add('');
-      End
-      Else
-      Begin
-        AList.Add('Function T' + FClsName + 's.GetItem(Index : Integer) : T' + FClsName + ';');
-        AList.Add('Begin');
-        AList.Add('  Result := InHerited Items[Index] As T' + FClsName + ';');
-        AList.Add('End;');
-        AList.Add('');
-        AList.Add('Procedure T' + FClsName + 's.SetItem(Index : Integer; Const Item : T' + FClsName + ');');
-        AList.Add('Begin');
-        AList.Add('  InHerited Items[Index] := Item;');
-        AList.Add('End;');
+        If FDataType = dsJSon Then
+        Begin
+          AList.Add('Function T' + FClsName + 's.Add() : I' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := T' + FClsName + '.Create(stObject);');
+          AList.Add('  InHerited Add(Result);');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + FClsName + 's.Add(Const AItem : I' + FClsName + ') : Integer;');
+          AList.Add('Begin');
+          AList.Add('  Result := InHerited Add(AItem);');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + FClsName + 's.GetItemClass() : TSuperObjectExClass;');
+          AList.Add('Begin');
+          AList.Add('  Result := T' + FClsName + ';');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + FClsName + 's.GetItem(Const Index : Integer) : I' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := InHerited Items[Index] As I' + FClsName + ';');
+          AList.Add('End;');
+        End
+        Else If FDataType = dsXML Then
+        Begin
+          AList.Add('Procedure T' + FClsName + 's.AfterConstruction();');
+          AList.Add('Begin');
+          AList.Add('  RegisterChildNode(''' + FClsName + ''', T' + FClsName + ');');
+          AList.Add('  ItemTag       := ''' + FClsName + ''';');
+          AList.Add('  ItemInterface := I' + FClsName + ';');
+          AList.Add('');
+          AList.Add('  InHerited AfterConstruction();');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + FClsName + 's.GetItem(Const Index : Integer) : I' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := List[Index] As I' + FClsName  + ';');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + FClsName + 's.Add() : I' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := AddItem(-1) As I' + FClsName + ';');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + FClsName + 's.Insert(Const Index : Integer) : I' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := AddItem(Index) As I' + FClsName + ';');
+          AList.Add('End;');
+        End
+        Else If FUseInterface Then
+        Begin
+          If FUseEnumerator Then
+          Begin
+            If FUseNestedClass Then
+              AList.Add('Function T' + FClsName + 'List.T' + FClsName + 'Enumerator.GetCurrent() : I' + FClsName + ';')
+            Else
+              AList.Add('Function T' + FClsName + 'Enumerator.GetCurrent() : I' + FClsName + ';');
+            AList.Add('Begin');
+            AList.Add('  Result := InHerited Current As I' + FClsName + ';');
+            AList.Add('End;');
+            AList.Add('');
+
+            If FUseNestedClass Then
+              AList.Add('Function T' + FClsName + 'List.GetEnumerator() : I' + FClsName + 'Enumerator;')
+            Else
+              AList.Add('Function T' + FClsName + 's.GetEnumerator() : I' + FClsName + 'Enumerator;');
+
+            AList.Add('Begin');
+            AList.Add('  Result := T' + FClsName + 'Enumerator.Create(Self);');
+            AList.Add('End;');
+            AList.Add('');
+          End;
+
+          If FUseNestedClass Then
+            lClsName := FClsName + 'List'
+          Else
+            lClsName := FClsName + 's';
+
+          AList.Add('Function T' + lClsName + '.GetItemClass() : TInterfacedObjectExClass;');
+          AList.Add('Begin');
+          AList.Add('  Result := T' + lClsName + ';');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + lClsName + '.Get(Index : Integer) : I' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := InHerited Items[Index] As I' + FClsName + ';');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Procedure T' + lClsName + '.Put(Index : Integer; Const Item : I' + FClsName + ');');
+          AList.Add('Begin');
+          AList.Add('  InHerited Items[Index] := Item;');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + lClsName + '.Add() : I' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := InHerited Add() As I' + FClsName + ';');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Function T' + lClsName + '.Add(Const AItem : I' + FClsName + ') : Integer;');
+          AList.Add('Begin');
+          AList.Add('  Result := InHerited Add(AItem);');
+          AList.Add('End;');
+          AList.Add('');
+        End
+        Else
+        Begin
+          AList.Add('Function T' + FClsName + 's.GetItem(Index : Integer) : T' + FClsName + ';');
+          AList.Add('Begin');
+          AList.Add('  Result := InHerited Items[Index] As T' + FClsName + ';');
+          AList.Add('End;');
+          AList.Add('');
+          AList.Add('Procedure T' + FClsName + 's.SetItem(Index : Integer; Const Item : T' + FClsName + ');');
+          AList.Add('Begin');
+          AList.Add('  InHerited Items[Index] := Item;');
+          AList.Add('End;');
+        End;
       End;
+      {$EndRegion}
     End;
-    {$EndRegion}
 
     Finally
       lTmpList.Free();

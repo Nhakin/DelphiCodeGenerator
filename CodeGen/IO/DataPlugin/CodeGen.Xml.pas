@@ -22,6 +22,12 @@ Type
     Function  GetMakeList() : Boolean;
     Procedure SetMakeList(Value : Boolean);
 
+    Function  GetUseEnumerator() : Boolean;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
+
+    Function  GetUseNestedClass() : Boolean;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean);
+    
     Function  GetTrackChange() : Boolean;
     Procedure SetTrackChange(Value : Boolean);
 
@@ -33,6 +39,8 @@ Type
     Property UseInterface   : Boolean    Read GetUseInterface   Write SetUseInterface;
     Property UseStrict      : Boolean    Read GetUseStrict      Write SetUseStrict;
     Property MakeList       : Boolean    Read GetMakeList       Write SetMakeList;
+    Property UseEnumerator  : Boolean    Read GetUseEnumerator  Write SetUseEnumerator;
+    Property UseNestedClass : Boolean    Read GetUseNestedClass Write SetUseNestedClass;
     Property TrackChange    : Boolean    Read GetTrackChange    Write SetTrackChange;
     Property DataType       : String     Read GetDataType       Write SetDataType;
 
@@ -432,6 +440,12 @@ Type
 
     Function  GetMakeList() : Boolean;
     Procedure SetMakeList(Value: Boolean);
+
+    Function  GetUseEnumerator() : Boolean;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
+
+    Function  GetUseNestedClass() : Boolean;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean);
 
     Function  GetTrackChange() : Boolean;
     Procedure SetTrackChange(Value: Boolean);
@@ -976,6 +990,26 @@ End;
 Procedure TXMLClassSettings.SetMakeList(Value: Boolean);
 Begin
   ChildNodes['MakeList'].AsBoolean := Value;
+End;
+
+Function TXMLClassSettings.GetUseEnumerator() : Boolean;
+Begin
+  Result := ChildNodes['UseEnumerator'].AsBoolean;
+End;
+
+Procedure TXMLClassSettings.SetUseEnumerator(Const AUseEnumerator : Boolean);
+Begin
+  ChildNodes['UseEnumerator'].AsBoolean := AUseEnumerator;
+End;
+
+Function TXMLClassSettings.GetUseNestedClass() : Boolean;
+Begin
+  Result := ChildNodes['UseNestedClass'].AsBoolean;
+End;
+
+Procedure TXMLClassSettings.SetUseNestedClass(Const AUseNestedClass : Boolean);
+Begin
+  ChildNodes['UseNestedClass'].AsBoolean := AUseNestedClass;
 End;
 
 Function TXMLClassSettings.GetTrackChange() : Boolean;

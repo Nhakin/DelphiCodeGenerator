@@ -70,11 +70,11 @@ End;
 
 Procedure TBinMsSqlOptionsImpl.ReadFromStreamV01(AStream : IStreamEx);
 Begin
-  ServerName   := AStream.ReadString();
+  ServerName   := AStream.ReadAnsiString();
   LoginType    := AStream.ReadByte();
-  UserName     := AStream.ReadString();
-  Password     := AStream.ReadString();
-  DataBaseName := AStream.ReadString();
+  UserName     := AStream.ReadAnsiString();
+  Password     := AStream.ReadAnsiString();
+  DataBaseName := AStream.ReadAnsiString();
 End;
 
 Procedure TBinMsSqlOptionsImpl.SaveToStream(ATarget : IStreamEx);
@@ -82,11 +82,11 @@ Const
   cStreamVersion = 1;
 Begin
   ATarget.WriteByte(cStreamVersion);
-  ATarget.WriteString(ServerName);
+  ATarget.WriteAnsiString(ServerName);
   ATarget.WriteByte(LoginType);
-  ATarget.WriteString(UserName);
-  ATarget.WriteString(Password);
-  ATarget.WriteString(DataBaseName);
+  ATarget.WriteAnsiString(UserName);
+  ATarget.WriteAnsiString(Password);
+  ATarget.WriteAnsiString(DataBaseName);
 End;
 
 end.

@@ -437,6 +437,8 @@ Type
     Procedure SetUseStrict(Const AUseStrict : Boolean); OverRide;
     Procedure SetUseCustomClass(Const AUseCustomClass : Boolean); OverRide;
     Procedure SetMakeList(Const AMakeList : Boolean); OverRide;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean); OverRide;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean); OverRide;
     Procedure SetTrackChange(Const ATrackChange : Boolean); OverRide;
     Procedure SetDataType(Const ADataType : THsDataSource); OverRide;
     Procedure SetAdoQueryClassName(Const AAdoQueryClassName : String); OverRide;
@@ -1199,6 +1201,8 @@ Begin
   FSettings.AddBooleanSetting('UseInterface').OnChange   := DoSetSettingProperties;
   FSettings.AddBooleanSetting('UseStrict').OnChange      := DoSetSettingProperties;
   FSettings.AddBooleanSetting('MakeList').OnChange       := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('UseEnumerator').OnChange  := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('UseNestedClass').OnChange := DoSetSettingProperties;
   FSettings.AddBooleanSetting('TrackChange').OnChange    := DoSetSettingProperties;
   FSettings.AddEnumSetting('DataType', TypeInfo(THsDataSource)).OnChange := DoSetSettingProperties;
 
@@ -1212,6 +1216,8 @@ Begin
   SetUseStrict(False);
   SetUseCustomClass(False);
   SetMakeList(False);
+  SetUseEnumerator(False);
+  SetUseNestedClass(False);
   SetTrackChange(False);
   SetDataType(dsNone);
 
@@ -1272,6 +1278,10 @@ Begin
     InHerited SetUseStrict(Sender.SettingValue)
   Else If SameText(Sender.SettingName, 'MakeList') Then
     InHerited SetMakeList(Sender.SettingValue)
+  Else If SameText(Sender.SettingName, 'UseEnumerator') Then
+    InHerited SetUseEnumerator(Sender.SettingValue)
+  Else If SameText(Sender.SettingName, 'UseNestedClass') Then
+    InHerited SetUseNestedClass(Sender.SettingValue)
   Else If SameText(Sender.SettingName, 'TrackChange') Then
     InHerited SetTrackChange(Sender.SettingValue)
   Else If SameText(Sender.SettingName, 'DataType') Then
@@ -1330,6 +1340,18 @@ Procedure THsVTClassCodeGeneratorNode.SetMakeList(Const AMakeList : Boolean);
 Begin
 {//!!}  FSettings.NodeSettingByName('MakeList').SettingValue := AMakeList;
   InHerited SetMakeList(AMakeList);
+End;
+
+Procedure THsVTClassCodeGeneratorNode.SetUseEnumerator(Const AUseEnumerator : Boolean); 
+Begin
+{//!!}  FSettings.NodeSettingByName('UseEnumerator').SettingValue := AUseEnumerator;
+  InHerited SetUseEnumerator(AUseEnumerator);
+End;
+
+Procedure THsVTClassCodeGeneratorNode.SetUseNestedClass(Const AUseNestedClass : Boolean);
+Begin
+{//!!}  FSettings.NodeSettingByName('UseNestedClass').SettingValue := AUseNestedClass;
+  InHerited SetUseNestedClass(AUseNestedClass);
 End;
 
 Procedure THsVTClassCodeGeneratorNode.SetTrackChange(Const ATrackChange : Boolean);
@@ -1574,6 +1596,8 @@ Begin
       UseInterface   := ASource.ClassDefs[X].UseInterface;
       UseStrict      := ASource.ClassDefs[X].UseStrict;
       MakeList       := ASource.ClassDefs[X].MakeList;
+      UseEnumerator  := ASource.ClassDefs[X].UseEnumerator;
+      UseNestedClass := ASource.ClassDefs[X].UseNestedClass;
       TrackChange    := ASource.ClassDefs[X].TrackChange;
       DataType       := ASource.ClassDefs[X].DataType;
 

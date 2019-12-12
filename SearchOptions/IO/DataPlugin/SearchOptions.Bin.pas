@@ -91,9 +91,9 @@ Begin
   TextAtCaret   := lByte And cTextAtCaret = cTextAtCaret;
   WholeWords    := lByte And cWholeWords = cWholeWords;
 
-  SearchText := AStream.ReadString();
+  SearchText := AStream.ReadAnsiString();
   AStream.ReadTStrings(SearchTextHistory);
-  ReplaceText := AStream.ReadString();
+  ReplaceText := AStream.ReadAnsiString();
   AStream.ReadTStrings(ReplaceTextHistory);
 End;
 
@@ -125,9 +125,9 @@ Begin
 
   ATarget.WriteByte(cStreamVersion);
   ATarget.WriteByte(lByte);
-  ATarget.WriteString(SearchText);
+  ATarget.WriteAnsiString(SearchText);
   ATarget.WriteTStrings(SearchTextHistory);
-  ATarget.WriteString(ReplaceText);
+  ATarget.WriteAnsiString(ReplaceText);
   ATarget.WriteTStrings(ReplaceTextHistory);
 End;
 

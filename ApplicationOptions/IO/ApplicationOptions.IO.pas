@@ -233,7 +233,7 @@ Var lLst       : IHsStringListEx;
 Begin
   lLst := THsStringListEx.CreateList();
   Try
-    lLst.Text := ASource.ReadString(ASource.Size - ASource.Position);
+    lLst.Text := ASource.ReadAnsiString(ASource.Size - ASource.Position);
 
     For X := 0 To lLst.Count - 1 Do
     Begin
@@ -275,13 +275,13 @@ Begin
       If Length(lHexStr) Mod 32 = 0 Then
       Begin
         lHexStr := lHexStr + #$D#$A;
-        ATarget.WriteString(lHexStr, False);
+        ATarget.WriteAnsiString(lHexStr, False);
         lHexStr := '';
       End;
     End;
 
     If lHexStr <> '' Then
-      ATarget.WriteString(lHexStr, False);
+      ATarget.WriteAnsiString(lHexStr, False);
 
     Finally
       lStrStrm := Nil;

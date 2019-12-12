@@ -91,8 +91,8 @@ Procedure TBinGlobalOptionsImpl.ReadFromStreamV02(AStream : IStreamEx);
 Begin
   ReadFromStreamV01(AStream);
   ReopenLastFile := AStream.ReadBoolean();
-  LastOpenedFile := AStream.ReadString();
-  SkinName       := AStream.ReadString();
+  LastOpenedFile := AStream.ReadAnsiString();
+  SkinName       := AStream.ReadAnsiString();
 End;
 
 Procedure TBinGlobalOptionsImpl.ReadFromStreamV03(AStream : IStreamEx);
@@ -117,7 +117,7 @@ Begin
     While lNbItem > 0 Do
     Begin
       lPathId := AStream.ReadByte();
-      MRUList.Add(lLstPath[lPathId] + AStream.ReadString());
+      MRUList.Add(lLstPath[lPathId] + AStream.ReadAnsiString());
       Dec(lNbItem);
     End;
 
@@ -126,8 +126,8 @@ Begin
   End;
 
   ReopenLastFile := AStream.ReadBoolean();
-  LastOpenedFile := AStream.ReadString();
-  SkinName       := AStream.ReadString();
+  LastOpenedFile := AStream.ReadAnsiString();
+  SkinName       := AStream.ReadAnsiString();
 End;
 
 Procedure TBinGlobalOptionsImpl.SaveToStream(ATarget : IStreamEx);
@@ -162,7 +162,7 @@ Begin
     For X := 0 To MRUList.Count - 1 Do
     Begin
       ATarget.WriteByte(lLstPath.IndexOf(ExtractFilePath(MRUList[X])));
-      ATarget.WriteString(ExtractFileName(MRUList[X]));
+      ATarget.WriteAnsiString(ExtractFileName(MRUList[X]));
     End;
 
     Finally
@@ -170,8 +170,8 @@ Begin
   End;
 //  ATarget.WriteTStrings(MRUList);
   ATarget.WriteBoolean(ReopenLastFile);
-  ATarget.WriteString(LastOpenedFile);
-  ATarget.WriteString(SkinName);
+  ATarget.WriteAnsiString(LastOpenedFile);
+  ATarget.WriteAnsiString(SkinName);
 End;
 
 end.

@@ -28,18 +28,11 @@ uses
   ProcedureEditorDlg in 'ProcedureEditorDlg.pas' {FrmProcedureEditorDlg},
   SearchTextDlg in 'SearchTextDlg.pas' {TextSearchDialog},
   SearchOptionsIntf in 'SearchOptions\SearchOptionsIntf.pas',
-  HsStringListEx in 'V:\TSTOModToolKit\Source\HsUnits\HsStringListEx.pas',
   SearchOptionsImpl in 'SearchOptions\SearchOptionsImpl.pas',
   SearchOptions.Xml in 'SearchOptions\IO\DataPlugin\SearchOptions.Xml.pas',
   SearchOptions.JSon in 'SearchOptions\IO\DataPlugin\SearchOptions.JSon.pas',
   SearchOptions.Bin in 'SearchOptions\IO\DataPlugin\SearchOptions.Bin.pas',
   SearchOptions.IO in 'SearchOptions\IO\SearchOptions.IO.pas',
-  HsJSonEx in 'V:\TSTOModToolKit\Source\HsUnits\HsJSonEx.pas',
-  HsJSonFormatterEx in 'V:\TSTOModToolKit\Source\HsUnits\HsJSonFormatterEx.pas',
-  HsFunctionsEx in 'V:\TSTOModToolKit\Source\HsUnits\HsFunctionsEx.pas',
-  HsStreamEx in 'V:\TSTOModToolKit\Source\HsUnits\HsStreamEx.pas',
-  HsEventListEx in 'V:\TSTOModToolKit\Source\HsUnits\HsEventListEx.pas',
-  HsListEx in 'V:\TSTOModToolKit\Source\HsUnits\HsListEx.pas',
   HsIniFilesEx in 'HsUnits\HsIniFilesEx.pas',
   SearchOptions.Ini in 'SearchOptions\IO\DataPlugin\SearchOptions.Ini.pas',
   MsSqlOptionIntf in 'MsSqlOptions\MsSqlOptionIntf.pas',
@@ -66,7 +59,8 @@ uses
   HsBase64 in 'HsUnits\HsBase64.pas',
   FastStringFuncs in 'HsUnits\FastStringFuncs.pas',
   FastStrings in 'HsUnits\FastStrings.pas',
-  HegFile in 'TestUnits\HegFile.pas';
+  HegFile in 'TestUnits\HegFile.pas',
+  SynHighlighterPas in '..\..\ComponentD2007\SynEdit\Source\SynHighlighterPas.pas';
 
 {$R *.res}
 

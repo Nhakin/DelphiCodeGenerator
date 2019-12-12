@@ -185,6 +185,12 @@ Type
     Function  GetMakeList() : Boolean;
     Procedure SetMakeList(Const AMakeList : Boolean);
 
+    Function  GetUseEnumerator() : Boolean;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
+
+    Function  GetUseNestedClass() : Boolean;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean);
+
     Function  GetTrackChange() : Boolean;
     Procedure SetTrackChange(Const ATrackChange : Boolean);
 
@@ -205,6 +211,8 @@ Type
     Property UseInterface   : Boolean       Read GetUseInterface   Write SetUseInterface;
     Property UseStrict      : Boolean       Read GetUseStrict      Write SetUseStrict;
     Property MakeList       : Boolean       Read GetMakeList       Write SetMakeList;
+    Property UseEnumerator  : Boolean       Read GetUseEnumerator  Write SetUseEnumerator;
+    Property UseNestedClass : Boolean       Read GetUseNestedClass Write SetUseNestedClass;
     Property TrackChange    : Boolean       Read GetTrackChange    Write SetTrackChange;
     Property DataType       : THsDataSource Read GetDataType       Write SetDataType;
 

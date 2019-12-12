@@ -167,7 +167,11 @@ Begin
         lByte := lByte Or 8;
       If Generator.ClassDefs[X].UseStrict Then
         lByte := lByte Or 16;
-        
+      If Generator.ClassDefs[X].UseEnumerator Then
+        lByte := lByte Or 32;
+      If Generator.ClassDefs[X].UseNestedClass Then
+        lByte := lByte Or 64;
+
       WriteBuffer(lByte, SizeOf(lByte));
 
       lByte := Ord(Generator.ClassDefs[X].DataType);
@@ -264,7 +268,9 @@ Begin
           MakeList       := lByte And 4 = 4;
           TrackChange    := lByte And 8 = 8;
           UseStrict      := lByte And 16 = 16;
-
+          UseEnumerator  := lByte And 32 = 32;
+          UseNestedClass := lByte And 64 = 64;
+          
           ReadBuffer(lByte, SizeOf(lByte));
           DataType := THsDataSource(lByte);
 
@@ -374,6 +380,8 @@ Begin
       UseInterface   := lGen.ClassDefs[X].Settings.UseInterface;
       UseStrict      := lGen.ClassDefs[X].Settings.UseStrict;
       MakeList       := lGen.ClassDefs[X].Settings.MakeList;
+      UseEnumerator  := lGen.ClassDefs[X].Settings.UseEnumerator;
+      UseNestedClass := lGen.ClassDefs[X].Settings.UseNestedClass;
       TrackChange    := lGen.ClassDefs[X].Settings.TrackChange;
       DataType       := THsDataSource(GetEnumValue(TypeInfo(THsDataSource), lGen.ClassDefs[X].Settings.SettingDataType));
 
@@ -453,6 +461,8 @@ Begin
             Settings.UseInterface    := AUnitGenerator.ClassDefs[X].UseInterface;
             Settings.UseStrict       := AUnitGenerator.ClassDefs[X].UseStrict;
             Settings.MakeList        := AUnitGenerator.ClassDefs[X].MakeList;
+            Settings.UseEnumerator   := AUnitGenerator.ClassDefs[X].UseEnumerator;
+            Settings.UseNestedClass  := AUnitGenerator.ClassDefs[X].UseNestedClass;
             Settings.TrackChange     := AUnitGenerator.ClassDefs[X].TrackChange;
             Settings.SettingDataType := GetEnumName(TypeInfo(THsDataSource), Ord(AUnitGenerator.ClassDefs[X].DataType));
 
@@ -544,6 +554,8 @@ Begin
       UseInterface   := Generator.ClassDefs[X].Settings.UseInterface;
       UseStrict      := Generator.ClassDefs[X].Settings.UseStrict;
       MakeList       := Generator.ClassDefs[X].Settings.MakeList;
+      UseEnumerator  := Generator.ClassDefs[X].Settings.UseEnumerator;
+      UseNestedClass := Generator.ClassDefs[X].Settings.UseNestedClass;
       TrackChange    := Generator.ClassDefs[X].Settings.TrackChange;
       DataType       := THsDataSource(GetEnumValue(TypeInfo(THsDataSource), Generator.ClassDefs.Items[X].Settings.DataType));
 
@@ -636,8 +648,9 @@ Begin
           Settings.UseCustomClass := AUnitGenerator.ClassDefs[X].UseCustomClass;
           Settings.UseInterface   := AUnitGenerator.ClassDefs[X].UseInterface;
           Settings.UseStrict      := AUnitGenerator.ClassDefs[X].UseStrict;
-
           Settings.MakeList       := AUnitGenerator.ClassDefs[X].MakeList;
+          Settings.UseEnumerator  := AUnitGenerator.ClassDefs[X].UseEnumerator;
+          Settings.UseNestedClass := AUnitGenerator.ClassDefs[X].UseNestedClass;
           Settings.TrackChange    := AUnitGenerator.ClassDefs[X].TrackChange;
           Settings.DataType       := GetEnumName(TypeInfo(THsDataSource), Ord(AUnitGenerator.ClassDefs[X].DataType));
 
