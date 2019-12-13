@@ -158,7 +158,10 @@ Type
     Procedure SetIsReintroduce(AIsReintroduce : Boolean);
 
     Function  GetIsOverLoad() : Boolean;
-    Procedure SetIsOverLoad(Const AIsOverLoad : Boolean); 
+    Procedure SetIsOverLoad(Const AIsOverLoad : Boolean);
+
+    Function  GetShowInInterface() : Boolean;
+    Procedure SetShowInInterface(Const AShowInInterface : Boolean);
 
     Property ProcedureType       : Byte    Read GetProcedureType       Write SetProcedureType;
     Property ProcedureDef        : String  Read GetProcedureDef        Write SetProcedureDef;
@@ -172,6 +175,7 @@ Type
     Property IsOverRide          : Boolean Read GetIsOverRide          Write SetIsOverRide;
     Property IsReintroduce       : Boolean Read GetIsReintroduce       Write SetIsReintroduce;
     Property IsOverLoad          : Boolean Read GetIsOverLoad          Write SetIsOverLoad;
+    Property ShowInInterface     : Boolean Read GetShowInInterface     Write SetShowInInterface;
 
   End;
 
@@ -394,6 +398,9 @@ Type
 
     Function  GetIsOverLoad() : Boolean; Virtual;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean); Virtual;
+
+    Function  GetShowInInterface() : Boolean; Virtual;
+    Procedure SetShowInInterface(Const AShowInInterface : Boolean); Virtual;
 
   End;
 
@@ -876,6 +883,19 @@ End;
 Procedure TXmlProcedureDef.SetIsOverLoad(Const AIsOverLoad : Boolean);
 Begin
   ChildNodes['IsOverLoad'].AsBoolean := AIsOverLoad;
+End;
+
+Function TXmlProcedureDef.GetShowInInterface() : Boolean;
+Begin
+//  If Assigned(ChildNodes.FindNode('ShowInInterface')) Then
+    Result := ChildNodes['ShowInInterface'].AsBoolean
+//  Else
+//    Result := False;
+End;
+
+Procedure TXmlProcedureDef.SetShowInInterface(Const AShowInInterface : Boolean);
+Begin
+  ChildNodes['ShowInInterface'].AsBoolean := AShowInInterface;
 End;
 
 Procedure TXmlProcedureDefs.AfterConstruction();

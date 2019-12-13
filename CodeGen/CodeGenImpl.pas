@@ -102,14 +102,12 @@ Type
 
   THsProcedureDef = Class(TInterfacedObjectEx, IHsProcedureDef)
   Strict Private Const
-    CIsReIntroduce = 1;
-    CIsVirtual     = 2;
-    CIsAbstract    = 4;
-    CIsOverRide    = 8;
-    CIsPrivate     = 16;
-    CIsProtected   = 32;
-    CIsPublic      = 64;
-    CIsOverLoad    = 128;
+    CIsReIntroduce   = 1;
+    CIsVirtual       = 2;
+    CIsAbstract      = 4;
+    CIsOverRide      = 8;
+    CIsOverLoad      = 16;
+    CShowInInterface = 32;
     
   Strict Private
     FProcedureType       : Byte;
@@ -147,14 +145,21 @@ Type
 
     Function  GetIsReIntroduce() : Boolean; Virtual;
     Procedure SetIsReIntroduce(Const AIsReIntroduce : Boolean); Virtual;
+
     Function  GetIsVirtual() : Boolean; Virtual;
     Procedure SetIsVirtual(Const AIsVirtual : Boolean); Virtual;
+
     Function  GetIsAbstract() : Boolean; Virtual;
     Procedure SetIsAbstract(Const AIsAbstract : Boolean); Virtual;
+
     Function  GetIsOverRide() : Boolean; Virtual;
     Procedure SetIsOverRide(Const AIsOverRide : Boolean); Virtual;
+
     Function  GetIsOverLoad() : Boolean; Virtual;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean); Virtual;
+
+    Function  GetShowInInterface() : Boolean; Virtual;
+    Procedure SetShowInInterface(Const AShowInInterface : Boolean); Virtual;
 
     Function  GetProcedureScope() : THsFunctionScope; Virtual;
     Procedure SetProcedureScope(Const AProcedureScope : THsFunctionScope); Virtual;
@@ -676,6 +681,7 @@ Begin
     ptWord : Result := 'Word';
     ptDWord : Result := 'DWord';
     ptQWord : Result := 'Int64';
+    ptStringList : Result := 'TStrings';
 
     Else
       Result := 'Variant';
@@ -685,10 +691,20 @@ End;
 
 Function THsPropertyDef.GetVariableDefinition(Const AIsForRecord : Boolean = False) : String;
 Begin
-  If AIsForRecord Then
-    Result := FPropertyName + ':' + GetPropertyTypeStr() + ';'
-  Else
-    Result := 'F' + FPropertyName + ':' + GetPropertyTypeStr() + ';';
+  Case FPropertyType Of
+    ptStringList :
+    Begin
+      If AIsForRecord Then
+        Result := FPropertyName + ':TStrings'
+      Else
+        Result := 'F' + FPropertyName + ':TStrings;';
+    End;
+    Else
+      If AIsForRecord Then
+        Result := FPropertyName + ':' + GetPropertyTypeStr() + ';'
+      Else
+        Result := 'F' + FPropertyName + ':' + GetPropertyTypeStr() + ';';
+  End;
 End;
 
 Function THsPropertyDef.GetPropertyDefinition(Const AHaveGetter, AHaveSetter : Boolean) : String;
@@ -942,7 +958,7 @@ Begin
   Result := False;
 
   For X := 0 To Count - 1 Do
-    If MyGet(X).PropertyType In [ptObject, ptInterface] Then
+    If MyGet(X).PropertyType In [ptObject, ptInterface, ptStringList] Then
     Begin
       Result := True;
       Break;
@@ -955,7 +971,7 @@ Begin
   Result := False;
 
   For X := 0 To Count - 1 Do
-    If MyGet(X).PropertyType In [ptObject, ptInterface] Then
+    If MyGet(X).PropertyType In [ptObject, ptInterface, ptStringList] Then
     Begin
       Result := True;
       Break;
@@ -1172,7 +1188,8 @@ Begin
   AList.Add('    [''' + GUIDToString(lGuidRec.Guid) + ''']');
 
   For X := 0 To FProcedureDefs.Count - 1 Do
-    AList.Add('    ' + FProcedureDefs[X].GetProcedureDefinition(True));
+    If FProcedureDefs[X].ShowInInterface Then
+      AList.Add('    ' + FProcedureDefs[X].GetProcedureDefinition(True));
   If FProcedureDefs.Count > 0 Then
     AList.Add('');
 
@@ -1380,25 +1397,20 @@ Begin
       End;
 
       If FPropertyDefs.HaveConstructor Then
-      Begin
         AList.Add('      Procedure AfterConstruction(); OverRide;');
-        
-        If Not FPropertyDefs.HaveDestructor Then
-          AList.Add('');
-      End;
 
       If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
-      Begin
-        AList.Add('      Destructor BeforeDestruction(); OverRide;');
-        AList.Add('');
-      End;
+        AList.Add('      Procedure BeforeDestruction(); OverRide;');
+
+      AList.Add('');
 
       AList.Add('    End;');
       AList.Add('');
   (**)
       AList.Add('  Protected');
       AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
-      AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
+      If FUseEnumerator Then
+        AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
       AList.Add('');
       AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
       AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + '); OverLoad;');
@@ -1624,8 +1636,9 @@ Begin
           AList.Add('  T' + FClsName + 's = Class(TInterfaceListEx, I' + FClsName + 's)');
           AList.Add('  Protected');
           AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
-          AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
-
+          If FUseEnumerator Then
+            AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
+          AList.Add('');
           AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
           AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + '); OverLoad;');
           AList.Add('');
@@ -1726,6 +1739,8 @@ Begin
                   FPropertyDefs[X].PropertyName + ':=' +
                   FPropertyDefs[X].InterfaceImplementor + '.Create();');
             End;
+            ptStringList :
+              lTmpList.Add('  F' + FPropertyDefs[X].PropertyName + ':=TStringList.Create();');
           End;
 
         AlignVariableAssign(lTmpList);
@@ -1755,10 +1770,11 @@ Begin
         AList.Add('Begin');
         For X := 0 To FPropertyDefs.Count - 1 Do
           Case FPropertyDefs[X].PropertyType Of
-            ptObject :
-              AList.Add('  FreeAndNil(F' +
-                FPropertyDefs[X].PropertyName + ');');
-
+            ptObject, ptStringList :
+            Begin
+              AList.Add('  If Assigned(F' + FPropertyDefs[X].PropertyName + ') Then');
+              AList.Add('    FreeAndNil(F' + FPropertyDefs[X].PropertyName + ');');
+            End;
             ptInterface :
             Begin
               Case FDataType Of
@@ -2123,7 +2139,7 @@ Begin
 
           AList.Add('Function T' + lClsName + '.GetItemClass() : TInterfacedObjectExClass;');
           AList.Add('Begin');
-          AList.Add('  Result := T' + lClsName + ';');
+          AList.Add('  Result := T' + FClsName + ';');
           AList.Add('End;');
           AList.Add('');
           AList.Add('Function T' + lClsName + '.Get(Index : Integer) : I' + FClsName + ';');
@@ -2202,9 +2218,9 @@ Begin
 End;
 
 Procedure THsClassCodeGenerator.GenerateMSSqlSaveCode(AList : TStringList);
-Var X : Integer;
-    lTmpList : TStringList;
-    lProps : IHsPropertyDefs;
+Var X           : Integer;
+    lTmpList    : TStringList;
+    lProps      : IHsPropertyDefs;
     lPrimaryKey : IHsPropertyDef;
 Begin
   lProps := THsPropertyDefs.Create();
@@ -2351,10 +2367,10 @@ Procedure THsClassCodeGenerator.GenerateMSSqlCreateTableCode(AList : TStringList
     End;
   End;
 
-Var lProps : IHsPropertyDefs;
+Var lProps      : IHsPropertyDefs;
     lPrimaryKey : IHsPropertyDef;
-    X : Integer;
-    lStr : String;
+    X           : Integer;
+    lStr        : String;
 Begin
   lProps := THsPropertyDefs.Create();
   Try
@@ -2734,6 +2750,19 @@ Begin
     FProcFlags := FProcFlags Or CIsOverLoad
   Else If FProcFlags And CIsOverLoad = CIsOverLoad Then
     FProcFlags := FProcFlags Xor CIsOverLoad;
+End;
+
+Function THsProcedureDef.GetShowInInterface() : Boolean;
+Begin
+  Result := FProcFlags And CShowInInterface = CShowInInterface;
+End;
+
+Procedure THsProcedureDef.SetShowInInterface(Const AShowInInterface : Boolean);
+Begin
+  If AShowInInterface Then
+    FProcFlags := FProcFlags Or CShowInInterface
+  Else If FProcFlags And CShowInInterface = CShowInInterface Then
+    FProcFlags := FProcFlags Xor CShowInInterface;
 End;
 
 Function THsProcedureDef.GetProcedureScope() : THsFunctionScope;

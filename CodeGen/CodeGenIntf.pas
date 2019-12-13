@@ -113,14 +113,21 @@ Type
 
     Function  GetIsReIntroduce() : Boolean;
     Procedure SetIsReIntroduce(Const AIsReIntroduce : Boolean);
+
     Function  GetIsVirtual() : Boolean;
     Procedure SetIsVirtual(Const AIsVirtual : Boolean);
+
     Function  GetIsAbstract() : Boolean;
     Procedure SetIsAbstract(Const AIsAbstract : Boolean);
+
     Function  GetIsOverRide() : Boolean;
     Procedure SetIsOverRide(Const AIsOverRide : Boolean);
+
     Function  GetIsOverLoad() : Boolean;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean);
+
+    Function  GetShowInInterface() : Boolean;
+    Procedure SetShowInInterface(Const AShowInInterface : Boolean);
 
     Function  GetProcedureScope() : THsFunctionScope;
     Procedure SetProcedureScope(Const AProcedureScope : THsFunctionScope);
@@ -131,11 +138,12 @@ Type
     Property ProcedureParameters : String                Read GetProcedureParameters Write SetProcedureParameters;
     Property ResultType          : THsFunctionResultType Read GetResultType          Write SetResultType;
 
-    Property IsReIntroduce : Boolean Read GetIsReIntroduce Write SetIsReIntroduce;
-    Property IsVirtual     : Boolean Read GetIsVirtual     Write SetIsVirtual;
-    Property IsAbstract    : Boolean Read GetIsAbstract    Write SetIsAbstract;
-    Property IsOverRide    : Boolean Read GetIsOverRide    Write SetIsOverRide;
-    Property IsOverLoad    : Boolean Read GetIsOverLoad    Write SetIsOverLoad;
+    Property IsReIntroduce   : Boolean Read GetIsReIntroduce   Write SetIsReIntroduce;
+    Property IsVirtual       : Boolean Read GetIsVirtual       Write SetIsVirtual;
+    Property IsAbstract      : Boolean Read GetIsAbstract      Write SetIsAbstract;
+    Property IsOverRide      : Boolean Read GetIsOverRide      Write SetIsOverRide;
+    Property IsOverLoad      : Boolean Read GetIsOverLoad      Write SetIsOverLoad;
+    Property ShowInInterface : Boolean Read GetShowInInterface Write SetShowInInterface;
 
     Property ProcedureScope : THsFunctionScope Read GetProcedureScope Write SetProcedureScope;
 

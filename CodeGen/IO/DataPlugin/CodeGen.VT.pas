@@ -388,6 +388,7 @@ Type
     Procedure SetIsAbstract(Const AIsAbstract : Boolean); OverRide;
     Procedure SetIsOverRide(Const AIsOverRide : Boolean); OverRide;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean); OverRide;
+    Procedure SetShowInInterface(Const AShowInInterface : Boolean); OverRide;
 
     Procedure SetProcedureScope(Const AProcedureScope : THsFunctionScope); OverRide;
     
@@ -1056,11 +1057,12 @@ Begin
   FSettings.AddEnumSetting('ReturnType', TypeInfo(THsFunctionResultType)).OnChange := DoSetSettingProperties;
   FSettings.AddEnumSetting('Scope', TypeInfo(THsFunctionScope)).OnChange := DoSetSettingProperties;
 
-  FSettings.AddBooleanSetting('IsReIntroduce').OnChange := DoSetSettingProperties;
-  FSettings.AddBooleanSetting('IsVirtual').OnChange     := DoSetSettingProperties;
-  FSettings.AddBooleanSetting('IsAbstract').OnChange    := DoSetSettingProperties;
-  FSettings.AddBooleanSetting('IsOverRide').OnChange    := DoSetSettingProperties;
-  FSettings.AddBooleanSetting('IsOverLoad').OnChange    := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('IsReIntroduce').OnChange   := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('IsVirtual').OnChange       := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('IsAbstract').OnChange      := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('IsOverRide').OnChange      := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('IsOverLoad').OnChange      := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('ShowInInterface').OnChange := DoSetSettingProperties;
 
   TStringList(InHerited GetProcedureImpl()).OnChange := DoOnCodeChange;
 
@@ -1068,6 +1070,9 @@ Begin
   SetIsVirtual(False);
   SetIsAbstract(False);
   SetIsOverRide(False);
+  SetIsOverLoad(False);
+  SetProcedureScope(fsPublic);
+  SetShowInInterface(True);
 End;
 
 Procedure THsVTProcedureDef.DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
@@ -1089,7 +1094,9 @@ Begin
   Else If SameText(Sender.SettingName, 'IsOverLoad') Then
     InHerited SetIsOverLoad(Sender.SettingValue)
   Else If SameText(Sender.SettingName, 'Scope') Then
-    InHerited SetProcedureScope(THsFunctionScope(GetEnumValue(TypeInfo(THsFunctionScope), Sender.SettingValue)));
+    InHerited SetProcedureScope(THsFunctionScope(GetEnumValue(TypeInfo(THsFunctionScope), Sender.SettingValue)))
+  Else If SameText(Sender.SettingName, 'ShowInInterface') Then
+    InHerited SetShowInInterface(Sender.SettingValue);
 End;
 
 Procedure THsVTProcedureDef.DoOnCodeChange(Sender : TObject);
@@ -1157,6 +1164,12 @@ Procedure THsVTProcedureDef.SetIsOverLoad(Const AIsOverLoad : Boolean);
 Begin
   FSettings.NodeSettingByName('IsOverLoad').SettingValue := AIsOverLoad;
   InHerited SetIsOverLoad(AIsOverLoad);
+End;
+
+Procedure THsVTProcedureDef.SetShowInInterface(Const AShowInInterface : Boolean); 
+Begin
+  FSettings.NodeSettingByName('ShowInInterface').SettingValue := AShowInInterface;
+  InHerited SetShowInInterface(AShowInInterface);
 End;
 
 Procedure THsVTProcedureDef.SetProcedureScope(Const AProcedureScope : THsFunctionScope);
@@ -1640,6 +1653,7 @@ Begin
           IsOverRide          := ASource.ClassDefs[X].ProcedureDefs[Y].IsOverRide;
           IsReintroduce       := ASource.ClassDefs[X].ProcedureDefs[Y].IsReIntroduce;
           IsOverLoad          := ASource.ClassDefs[X].ProcedureDefs[Y].IsOverLoad;
+          ShowInInterface     := ASource.ClassDefs[X].ProcedureDefs[Y].ShowInInterface;
         End;
       End;
     End;
