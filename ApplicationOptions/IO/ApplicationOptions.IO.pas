@@ -52,7 +52,7 @@ implementation
 
 
 Uses
-  Classes, SysUtils, HsXmlDocEx, HsStringListEx, HsBase64, FastStringFuncs, 
+  Classes, SysUtils, HsXmlDocEx, HsStringListEx, HsBase64Ex, FastStringFuncs, 
   ApplicationOptionsImpl, ApplicationOptions.Bin, ApplicationOptions.Ini,
   ApplicationOptions.Xml, ApplicationOptions.JSon;
 

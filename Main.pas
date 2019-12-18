@@ -176,7 +176,7 @@ var
 
 implementation
 
-Uses TypInfo, Math, SynEditTypes, HsXmlDocEx, HsJSonEx, HsBase64, FastStringFuncs,
+Uses TypInfo, Math, SynEditTypes, HsXmlDocEx, HsJSonEx, HsBase64Ex, FastStringFuncs,
   AbZipKit, AbZipTyp, HegFile, DateUtils,
 //  SearchOptions.Ini, SearchOptions.Xml, SearchOptions.JSon,
   ApplicationOptions.Ini, ApplicationOptions.Xml, ApplicationOptions.JSon,

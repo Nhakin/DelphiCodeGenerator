@@ -6,7 +6,7 @@ Uses
   Classes, HsIniFilesEx;
 
 Type
-  IIniSearchOptions = Interface(IIniFileEx)
+  IIniSearchOptions = Interface(IHsIniFileEx)
     ['{4B61686E-29A0-2112-B139-67B9D21979F9}']
     Function  GetBackward() : Boolean;
     Procedure SetBackward(Const ABackward : Boolean);
@@ -73,16 +73,19 @@ Uses Dialogs,
   SysUtils, HsInterfaceEx, HsStringListEx, SearchOptionsIntf;
 
 Type
-  TIniSearchOptionsImpl = Class(TMemIniFileEx, ISearchOptions, IIniSearchOptions)
+  TIniSearchOptionsImpl = Class(THsMemIniFileEx, ISearchOptions, IIniSearchOptions)
   Private
     FSearchImpl : Pointer;
     FInterfaceState : TInterfaceState;
     
     Function GetSearchImplementor() : ISearchOptions;
+    Function GetImplementor() : THsCustomIniFileImplementor;
 
   Protected
-    Property Implementor : TInterfaceExImplementor Read GetImplementor Implements
+    Property Implementor : THsCustomIniFileImplementor Read GetImplementor Implements
       ISearchOptions, IIniSearchOptions;
+//    Property Implementor : TInterfaceExImplementor Read GetImplementor Implements
+//      ISearchOptions, IIniSearchOptions;
     Property SearchImpl : ISearchOptions Read GetSearchImplementor;
 
     Function  GetBackward() : Boolean;
@@ -191,6 +194,11 @@ End;
 Function TIniSearchOptionsImpl.GetSearchImplementor() : ISearchOptions;
 Begin
   Result := ISearchOptions(FSearchImpl);
+End;
+
+Function TIniSearchOptionsImpl.GetImplementor() : THsCustomIniFileImplementor;
+Begin
+  Result := InHerited Implementor;
 End;
 
 Function TIniSearchOptionsImpl.GetInterfaceState() : TInterfaceState;

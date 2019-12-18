@@ -5,7 +5,7 @@ interface
 Uses HsInterfaceEx, HsIniFilesEx;
 
 Type
-  IIniMsSqlOptions = Interface(IMemIniFileEx)
+  IIniMsSqlOptions = Interface(IHsMemIniFileEx)
     ['{4B61686E-29A0-2112-970D-1A1B4679D306}']
     Function  GetServerName() : String;
     Procedure SetServerName(Const AServerName : String);
@@ -47,15 +47,16 @@ implementation
 Uses Classes, SysUtils, MsSqlOptionIntf;
 
 Type
-  TIniMsSqlOptionsImpl = Class(TMemIniFileEx, IMsSqlOptions, IIniMsSqlOptions)
+  TIniMsSqlOptionsImpl = Class(THsMemIniFileEx, IMsSqlOptions, IIniMsSqlOptions)
   Private
     FSqlOptionsImpl : Pointer;
     FInterfaceState : TInterfaceState;
 
     Function GetSqlOptionsImpl() : IMsSqlOptions;
+    Function GetImplementor() : THsCustomIniFileImplementor;
 
   Protected
-    Property Implementor : TInterfaceExImplementor Read GetImplementor Implements
+    Property Implementor : THsCustomIniFileImplementor Read GetImplementor Implements
       IMsSqlOptions, IIniMsSqlOptions;
 
     Property SqlOptionsImpl : IMsSqlOptions Read GetSqlOptionsImpl;
@@ -140,6 +141,11 @@ End;
 Function TIniMsSqlOptionsImpl.GetSqlOptionsImpl() : IMsSqlOptions;
 Begin
   Result := IMsSqlOptions(FSqlOptionsImpl);
+End;
+
+Function TIniMsSqlOptionsImpl.GetImplementor() : THsCustomIniFileImplementor;
+Begin
+  Result := InHerited Implementor;
 End;
 
 Procedure TIniMsSqlOptionsImpl.Assign(ASource : IInterface; Const ASyncSource : Boolean = True);

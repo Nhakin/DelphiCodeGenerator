@@ -6,7 +6,7 @@ Uses
   HsInterfaceEx, HsIniFilesEx;
 
 Type
-  IIniGlobalOptions = Interface(IMemIniFileEx)
+  IIniGlobalOptions = Interface(IHsMemIniFileEx)
     ['{4B61686E-29A0-2112-B802-D797C8607D71}']
     Function  GetInterfaceState() : TInterfaceState;
 
@@ -77,15 +77,16 @@ Uses
   Classes, SysUtils, RtlConsts, HsStringListEx, GlobalOptionsIntf;
 
 Type
-  TIniGlobalOptionsImpl = Class(TMemIniFileEx, IGlobalOptions, IIniGlobalOptions)
+  TIniGlobalOptionsImpl = Class(THsMemIniFileEx, IGlobalOptions, IIniGlobalOptions)
   Private
     FGlobalOptionsImpl : Pointer;
     FInterfaceState    : TInterfaceState;
 
     Function GetGlobalOptionsImpl() : IGlobalOptions;
+    Function GetImplementor() : THsCustomIniFileImplementor;
 
   Protected
-    Property Implementor : TInterfaceExImplementor Read GetImplementor Implements
+    Property Implementor : THsCustomIniFileImplementor Read GetImplementor Implements
       IGlobalOptions, IIniGlobalOptions;
   
     Property GlobalOptionsImpl : IGlobalOptions Read GetGlobalOptionsImpl;
@@ -199,6 +200,11 @@ End;
 Function TIniGlobalOptionsImpl.GetGlobalOptionsImpl() : IGlobalOptions;
 Begin
   Result := IGlobalOptions(FGlobalOptionsImpl);
+End;
+
+Function TIniGlobalOptionsImpl.GetImplementor() : THsCustomIniFileImplementor;
+Begin
+  Result := InHerited Implementor;
 End;
 
 Function TIniGlobalOptionsImpl.GetInterfaceState() : TInterfaceState;

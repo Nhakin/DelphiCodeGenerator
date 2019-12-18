@@ -1,0 +1,3 @@
+[submodule "HsUnits"]
+	path = HsUnits
+	url = https://github.com/Nhakin/HsUnits.git

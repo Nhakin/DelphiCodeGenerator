@@ -1,0 +1,6 @@
+[bugtraq]
+	providerparams = "owner=Nhakin;repository=DelphiCodeGenerator;keyword=<None>;reffullrepo=True;showprsbydefault=True"
+	provideruuid = {B2C6EC0F-8742-4792-9FDC-10635D2C118C}
+	provideruuid64 = {B2C6EC0F-8742-4792-9FDC-10635D2C118B}
+	url = https://github.com/Nhakin/DelphiCodeGenerator/issues/%BUGID%
+	logregex = "(?:\\\\S+\\\\/\\\\S+)?#(\\\\d+)"

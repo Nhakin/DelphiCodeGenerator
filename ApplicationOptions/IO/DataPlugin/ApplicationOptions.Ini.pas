@@ -6,7 +6,7 @@ Uses
   HsIniFilesEx, GlobalOptions.Ini, MsSqlOptions.Ini, SearchOptions.Ini;
 
 Type
-  IIniApplicationOptions = Interface(IMemIniFileEx)
+  IIniApplicationOptions = Interface(IHsMemIniFileEx)
     ['{4B61686E-29A0-2112-97BC-EB0895DBF0FF}']
     Function GetGlobalOptions() : IIniGlobalOptions;
     Function GetMsSqlOptions() : IIniMsSqlOptions;
@@ -34,7 +34,7 @@ Uses
   HsInterfaceEx, ApplicationOptionsIntf, GlobalOptionsIntf, MsSqlOptionIntf, SearchOptionsIntf;
   
 Type
-  TIniApplicationOptionsImpl = Class(TMemIniFileEx, IApplicationOptions, IIniApplicationOptions)
+  TIniApplicationOptionsImpl = Class(THsMemIniFileEx, IApplicationOptions, IIniApplicationOptions)
   Private
     FAppOptionsImpl : Pointer;
     FInterfaceState : TInterfaceState;
@@ -44,11 +44,12 @@ Type
     FIniSearchParameters : IIniSearchOptions;
 
     Function GetAppOptionsImpl() : IApplicationOptions;
+    Function GetImplementor() : THsCustomIniFileImplementor;
 
   Protected
     Property AppOptionsImpl : IApplicationOptions Read GetAppOptionsImpl;
 
-    Property Implementor : TInterfaceExImplementor Read GetImplementor Implements
+    Property Implementor : THsCustomIniFileImplementor Read GetImplementor Implements
       IApplicationOptions, IIniApplicationOptions;
   
     Function GetGlobalOptions() : IIniGlobalOptions;
@@ -124,6 +125,11 @@ End;
 Function TIniApplicationOptionsImpl.GetAppOptionsImpl() : IApplicationOptions;
 Begin
   Result := IApplicationOptions(FAppOptionsImpl);
+End;
+
+Function TIniApplicationOptionsImpl.GetImplementor() : THsCustomIniFileImplementor;
+Begin
+  Result := InHerited Implementor;
 End;
 
 Function TIniApplicationOptionsImpl.GetInterfaceState() : TInterfaceState;
