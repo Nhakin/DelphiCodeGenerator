@@ -388,6 +388,7 @@ Type
     Procedure SetIsAbstract(Const AIsAbstract : Boolean); OverRide;
     Procedure SetIsOverRide(Const AIsOverRide : Boolean); OverRide;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean); OverRide;
+    Procedure SetIsFinal(Const AIsFinal : Boolean); OverRide;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean); OverRide;
 
     Procedure SetProcedureScope(Const AProcedureScope : THsFunctionScope); OverRide;
@@ -1057,12 +1058,13 @@ Begin
   FSettings.AddEnumSetting('ReturnType', TypeInfo(THsFunctionResultType)).OnChange := DoSetSettingProperties;
   FSettings.AddEnumSetting('Scope', TypeInfo(THsFunctionScope)).OnChange := DoSetSettingProperties;
 
+  FSettings.AddBooleanSetting('ShowInInterface').OnChange := DoSetSettingProperties;
   FSettings.AddBooleanSetting('IsReIntroduce').OnChange   := DoSetSettingProperties;
   FSettings.AddBooleanSetting('IsVirtual').OnChange       := DoSetSettingProperties;
   FSettings.AddBooleanSetting('IsAbstract').OnChange      := DoSetSettingProperties;
   FSettings.AddBooleanSetting('IsOverRide').OnChange      := DoSetSettingProperties;
   FSettings.AddBooleanSetting('IsOverLoad').OnChange      := DoSetSettingProperties;
-  FSettings.AddBooleanSetting('ShowInInterface').OnChange := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('IsFinal').OnChange         := DoSetSettingProperties;
 
   TStringList(InHerited GetProcedureImpl()).OnChange := DoOnCodeChange;
 
@@ -1073,6 +1075,7 @@ Begin
   SetIsOverLoad(False);
   SetProcedureScope(fsPublic);
   SetShowInInterface(True);
+  SetIsFinal(False);
 End;
 
 Procedure THsVTProcedureDef.DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
@@ -1096,7 +1099,9 @@ Begin
   Else If SameText(Sender.SettingName, 'Scope') Then
     InHerited SetProcedureScope(THsFunctionScope(GetEnumValue(TypeInfo(THsFunctionScope), Sender.SettingValue)))
   Else If SameText(Sender.SettingName, 'ShowInInterface') Then
-    InHerited SetShowInInterface(Sender.SettingValue);
+    InHerited SetShowInInterface(Sender.SettingValue)
+  Else If SameText(Sender.SettingName, 'IsFinal') Then
+    InHerited SetIsFinal(Sender.SettingValue);
 End;
 
 Procedure THsVTProcedureDef.DoOnCodeChange(Sender : TObject);
@@ -1164,6 +1169,12 @@ Procedure THsVTProcedureDef.SetIsOverLoad(Const AIsOverLoad : Boolean);
 Begin
   FSettings.NodeSettingByName('IsOverLoad').SettingValue := AIsOverLoad;
   InHerited SetIsOverLoad(AIsOverLoad);
+End;
+
+Procedure THsVTProcedureDef.SetIsFinal(Const AIsFinal : Boolean);
+Begin
+  FSettings.NodeSettingByName('IsFinal').SettingValue := AIsFinal;
+  InHerited SetIsFinal(AIsFinal);
 End;
 
 Procedure THsVTProcedureDef.SetShowInInterface(Const AShowInInterface : Boolean); 

@@ -600,6 +600,7 @@ Begin
           IsOverRide          := Generator.ClassDefs[X].ProcedureDefs[Y].IsOverRide;
           IsReintroduce       := Generator.ClassDefs[X].ProcedureDefs[Y].IsReIntroduce;
           IsOverLoad          := Generator.ClassDefs[X].ProcedureDefs[Y].IsOverLoad;
+          IsFinal             := Generator.ClassDefs[X].ProcedureDefs[Y].IsFinal;
           ShowInInterface     := Generator.ClassDefs[X].ProcedureDefs[Y].ShowInInterface;
         End;
       End;
@@ -709,6 +710,7 @@ Begin
               IsOverRide          := ProcedureDefs[Y].IsOverRide;
               IsReintroduce       := ProcedureDefs[Y].IsReIntroduce;
               IsOverLoad          := ProcedureDefs[Y].IsOverLoad;
+              IsFinal             := ProcedureDefs[Y].IsFinal;
               ShowInInterface     := ProcedureDefs[Y].ShowInInterface;
             End;
           End;

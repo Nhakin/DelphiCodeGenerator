@@ -160,6 +160,9 @@ Type
     Function  GetIsOverLoad() : Boolean;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean);
 
+    Function  GetIsFinal() : Boolean;
+    Procedure SetIsFinal(Const AIsFinal : Boolean);
+
     Function  GetShowInInterface() : Boolean;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean);
 
@@ -175,6 +178,7 @@ Type
     Property IsOverRide          : Boolean Read GetIsOverRide          Write SetIsOverRide;
     Property IsReintroduce       : Boolean Read GetIsReintroduce       Write SetIsReintroduce;
     Property IsOverLoad          : Boolean Read GetIsOverLoad          Write SetIsOverLoad;
+    Property IsFinal             : Boolean Read GetIsFinal             Write SetIsFinal;
     Property ShowInInterface     : Boolean Read GetShowInInterface     Write SetShowInInterface;
 
   End;
@@ -398,6 +402,9 @@ Type
 
     Function  GetIsOverLoad() : Boolean; Virtual;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean); Virtual;
+
+    Function  GetIsFinal() : Boolean; Virtual;
+    Procedure SetIsFinal(Const AIsFinal : Boolean); Virtual;
 
     Function  GetShowInInterface() : Boolean; Virtual;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean); Virtual;
@@ -885,12 +892,19 @@ Begin
   ChildNodes['IsOverLoad'].AsBoolean := AIsOverLoad;
 End;
 
+Function TXmlProcedureDef.GetIsFinal() : Boolean;
+Begin
+  Result := ChildNodes['IsFinal'].AsBoolean
+End;
+
+Procedure TXmlProcedureDef.SetIsFinal(Const AIsFinal : Boolean);
+Begin
+  ChildNodes['IsFinal'].AsBoolean := AIsFinal;
+End;
+
 Function TXmlProcedureDef.GetShowInInterface() : Boolean;
 Begin
-//  If Assigned(ChildNodes.FindNode('ShowInInterface')) Then
-    Result := ChildNodes['ShowInInterface'].AsBoolean
-//  Else
-//    Result := False;
+  Result := ChildNodes['ShowInInterface'].AsBoolean
 End;
 
 Procedure TXmlProcedureDef.SetShowInInterface(Const AShowInInterface : Boolean);

@@ -108,7 +108,8 @@ Type
     CIsOverRide      = 8;
     CIsOverLoad      = 16;
     CShowInInterface = 32;
-    
+    CIsFinal         = 64;
+
   Strict Private
     FProcedureType       : Byte;
     FProcedureDef        : String;
@@ -124,7 +125,7 @@ Type
   Protected
     Procedure Created(); OverRide;
 
-    Function GetProcedureDefinition(Const AForClass : Boolean = False) : String; Virtual;
+    Function GetProcedureDefinition(Const AForClass : Boolean = False; Const AForInterface : Boolean = False) : String; Virtual;
 
     Function  GetProcedureType() : Byte; Virtual;
     Procedure SetProcedureType(Const AProcedureType : Byte); Virtual;
@@ -157,6 +158,9 @@ Type
 
     Function  GetIsOverLoad() : Boolean; Virtual;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean); Virtual;
+
+    Function  GetIsFinal() : Boolean; Virtual;
+    Procedure SetIsFinal(Const AIsFinal : Boolean); Virtual;
 
     Function  GetShowInInterface() : Boolean; Virtual;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean); Virtual;
@@ -1187,26 +1191,28 @@ Begin
   lGuidRec.Int1 := MagicGuid;
   AList.Add('    [''' + GUIDToString(lGuidRec.Guid) + ''']');
 
-  For X := 0 To FProcedureDefs.Count - 1 Do
-    If FProcedureDefs[X].ShowInInterface Then
-      AList.Add('    ' + FProcedureDefs[X].GetProcedureDefinition(True));
-  If FProcedureDefs.Count > 0 Then
-    AList.Add('');
-
   For X := 0 To FPropertyDefs.Count - 1 Do
     AList.Add(FPropertyDefs[X].GetPropertyFunctions(True, True, False, False, 2));
 
-  lTmpList := TStringList.Create();
-  Try
-    For X := 0 To FPropertyDefs.Count - 1 Do
-      lTmpList.Add(FPropertyDefs[X].GetPropertyDefinition(True, True));
-    AlignProperties(lTmpList);
-    For X := 0 To lTmpList.Count - 1 Do
-      AList.Add(lTmpList[X]);
-    Finally
-      lTmpList.Free();
+  For X := 0 To FProcedureDefs.Count - 1 Do
+    If FProcedureDefs[X].ShowInInterface Then
+      AList.Add('    ' + FProcedureDefs[X].GetProcedureDefinition(True, True));
+
+  If FPropertyDefs.Count > 0 Then
+  Begin
+    AList.Add('');
+    lTmpList := TStringList.Create();
+    Try
+      For X := 0 To FPropertyDefs.Count - 1 Do
+        lTmpList.Add(FPropertyDefs[X].GetPropertyDefinition(True, True));
+      AlignProperties(lTmpList);
+      For X := 0 To lTmpList.Count - 1 Do
+        AList.Add(lTmpList[X]);
+      Finally
+        lTmpList.Free();
+    End;
+    AList.Add('');
   End;
-  AList.Add('');
   AList.Add('  End;');
   AList.Add('');
 
@@ -2752,6 +2758,19 @@ Begin
     FProcFlags := FProcFlags Xor CIsOverLoad;
 End;
 
+Function THsProcedureDef.GetIsFinal() : Boolean;
+Begin
+  Result := FProcFlags And CIsFinal = CIsFinal;
+End;
+
+Procedure THsProcedureDef.SetIsFinal(Const AIsFinal : Boolean);
+Begin
+  If AIsFinal Then
+    FProcFlags := FProcFlags Or CIsFinal
+  Else If FProcFlags And CIsFinal = CIsFinal Then
+    FProcFlags := FProcFlags Xor CIsFinal;
+End;
+
 Function THsProcedureDef.GetShowInInterface() : Boolean;
 Begin
   Result := FProcFlags And CShowInInterface = CShowInInterface;
@@ -2811,7 +2830,7 @@ Begin
   Result := ResultTypeStr[AResultType];
 End;
 
-Function THsProcedureDef.GetProcedureDefinition(Const AForClass : Boolean = False) : String;
+Function THsProcedureDef.GetProcedureDefinition(Const AForClass : Boolean = False; Const AForInterface : Boolean = False) : String;
 Begin
   If FResultType = rtNone Then
     Result := 'Procedure '
@@ -2826,20 +2845,26 @@ Begin
   If FResultType <> rtNone Then
     Result := Result + ' : ' + GetResultTypeStr(FResultType);
 
-  If GetIsReIntroduce() Then
-    Result := Result + '; ReIntroduce';
+  If Not AForInterface And AForClass Then
+  Begin
+    If GetIsReIntroduce() Then
+      Result := Result + '; ReIntroduce';
 
-  If GetIsVirtual() Then
-    Result := Result + '; Virtual';
+    If GetIsVirtual() Then
+      Result := Result + '; Virtual';
 
-  If GetIsAbstract() Then
-    Result := Result + '; Abstract';
+    If GetIsAbstract() Then
+      Result := Result + '; Abstract';
 
-  If GetIsOverLoad() Then
+    If GetIsOverRide() Then
+      Result := Result + '; OverRide';
+
+    If GetIsFinal() Then
+      Result := Result + '; Final';
+  End;
+
+  If AForClass And GetIsOverLoad() Then
     Result := Result + '; OverLoad';
-
-  If GetIsOverRide() Then
-    Result := Result + '; OverRide';
 
   Result := Result + ';';
 End;

@@ -92,7 +92,7 @@ Type
 
   IHsProcedureDef = Interface(IInterfaceEx)
     ['{4B61686E-29A0-2112-B08C-E2C6ABAB483A}']
-    Function GetProcedureDefinition(Const AForClass : Boolean = False) : String;
+    Function GetProcedureDefinition(Const AForClass : Boolean = False; Const AForInterface : Boolean = False) : String;
 
     Function  GetProcedureType() : Byte;
     Procedure SetProcedureType(Const AProcedureType : Byte);
@@ -126,6 +126,9 @@ Type
     Function  GetIsOverLoad() : Boolean;
     Procedure SetIsOverLoad(Const AIsOverLoad : Boolean);
 
+    Function  GetIsFinal() : Boolean;
+    Procedure SetIsFinal(Const AIsFinal : Boolean);
+
     Function  GetShowInInterface() : Boolean;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean);
 
@@ -143,6 +146,7 @@ Type
     Property IsAbstract      : Boolean Read GetIsAbstract      Write SetIsAbstract;
     Property IsOverRide      : Boolean Read GetIsOverRide      Write SetIsOverRide;
     Property IsOverLoad      : Boolean Read GetIsOverLoad      Write SetIsOverLoad;
+    Property IsFinal         : Boolean Read GetIsFinal         Write SetIsFinal;
     Property ShowInInterface : Boolean Read GetShowInInterface Write SetShowInInterface;
 
     Property ProcedureScope : THsFunctionScope Read GetProcedureScope Write SetProcedureScope;
