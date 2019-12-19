@@ -181,6 +181,14 @@ Begin
 
           FTree.Invalidate();
         End;
+      End
+      Else If SameText(lSetting.SettingName, 'MakeList') Then
+      Begin
+        lNodeData := FTree.GetNodeData(FNode.Parent.Parent);
+
+        If Supports(lNodeData^, IHsVTClassCodeGeneratorNode, lNodeGen) Then
+          lNodeGen.ListSettings.SettingsVisible := SameText(GetStrProp(FEdit, 'Text'), 'True');
+        FTree.Invalidate();
       End;
     End;
   End;
@@ -407,6 +415,7 @@ Begin
             Items.Add('True');
             Items.Add('False');
             ItemIndex := Items.IndexOf(BoolToStr(lSetting.SettingValue, True));
+            OnChange := EditChange;
           End;
         End;
 

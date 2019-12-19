@@ -194,6 +194,31 @@ Type
 
   End;
 
+  IXmlListSettings = Interface(IXmlNodeEx)
+    ['{4B61686E-29A0-2112-8A6A-A928EC93DCEA}']
+    Function  GetUseStrict() : Boolean;
+    Procedure SetUseStrict(Const AUseStrict : Boolean);
+
+    Function  GetUseEnumerator() : Boolean;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
+
+    Function  GetUseNestedClass() : Boolean;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean);
+
+    Function  GetIsSealed() : Boolean;
+    Procedure SetIsSealed(Const AIsSealed : Boolean);
+
+    Function  GetMethods() : IXmlProcedureDefs;
+
+
+    Property UseStrict      : Boolean           Read GetUseStrict      Write SetUseStrict;
+    Property UseEnumerator  : Boolean           Read GetUseEnumerator  Write SetUseEnumerator;
+    Property UseNestedClass : Boolean           Read GetUseNestedClass Write SetUseNestedClass;
+    Property IsSealed       : Boolean           Read GetIsSealed       Write SetIsSealed;
+    Property Methods        : IXmlProcedureDefs Read GetMethods;
+
+  End;
+    
   IXMLClassDef = Interface(IXMLNodeEx)
     ['{EBB74DEC-9864-449D-ACA3-3EE6267F4C9B}']
     Function  GetName() : String;
@@ -203,12 +228,14 @@ Type
     Function  GetMsSQLSettings() : IXMLMsSQLSettings;
     Function  GetProperties() : IXMLPropertyDefs;
     Function  GetProcedureDefs() : IXmlProcedureDefs;
+    Function  GetListSettings() : IXmlListSettings;
 
     Property Name          : String            Read GetName         Write SetName;
     Property Settings      : IXMLClassSettings Read GetSettings;
     Property MsSQLSettings : IXMLMsSQLSettings Read GetMsSQLSettings;
     Property Properties    : IXMLPropertyDefs  Read GetProperties;
     Property ProcedureDefs : IXmlProcedureDefs Read GetProcedureDefs;
+    Property ListSettings  : IXmlListSettings  Read GetListSettings;
 
   End;
 
@@ -423,6 +450,34 @@ Type
 
   End;
 
+  TXmlListSettings = Class(TXmlNodeEx, IXmlListSettings)
+  Protected
+    Function  GetUseStrict() : Boolean; Virtual;
+    Procedure SetUseStrict(Const AUseStrict : Boolean); Virtual;
+
+    Function  GetUseEnumerator() : Boolean; Virtual;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean); Virtual;
+
+    Function  GetUseNestedClass() : Boolean; Virtual;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean); Virtual;
+
+    Function  GetIsSealed() : Boolean; Virtual;
+    Procedure SetIsSealed(Const AIsSealed : Boolean); Virtual;
+
+    Function  GetMethods() : IXmlProcedureDefs; Virtual;
+
+  Published
+    Property UseStrict      : Boolean           Read GetUseStrict      Write SetUseStrict;
+    Property UseEnumerator  : Boolean           Read GetUseEnumerator  Write SetUseEnumerator;
+    Property UseNestedClass : Boolean           Read GetUseNestedClass Write SetUseNestedClass;
+    Property IsSealed       : Boolean           Read GetIsSealed       Write SetIsSealed;
+    Property Methods        : IXmlProcedureDefs Read GetMethods;
+
+  Public
+    Procedure AfterConstruction(); OverRide;
+
+  End;
+
   TXMLClassDef = Class(TXMLNodeEx, IXMLClassDef)
   Protected
     Function  GetName() : String;
@@ -432,6 +487,7 @@ Type
     Function GetMsSQLSettings() : IXMLMsSQLSettings;
     Function GetProperties() : IXMLPropertyDefs;
     Function GetProcedureDefs() : IXmlProcedureDefs;
+    Function GetListSettings() : IXmlListSettings;
 
   Public
     Procedure AfterConstruction(); OverRide;
@@ -936,12 +992,65 @@ Begin
   Result := AddItem(Index) As IXmlProcedureDef;
 End;
 
+Procedure TXmlListSettings.AfterConstruction();
+Begin
+  InHerited AfterConstruction();
+
+  RegisterChildNode('Methods', TXmlProcedureDefs);
+End;
+
+Function TXmlListSettings.GetUseStrict() : Boolean;
+Begin
+  Result := ChildNodes['UseStrict'].AsBoolean;
+End;
+
+Procedure TXmlListSettings.SetUseStrict(Const AUseStrict : Boolean);
+Begin
+  ChildNodes['UseStrict'].AsBoolean := AUseStrict;
+End;
+
+Function TXmlListSettings.GetUseEnumerator() : Boolean;
+Begin
+  Result := ChildNodes['UseEnumerator'].AsBoolean;
+End;
+
+Procedure TXmlListSettings.SetUseEnumerator(Const AUseEnumerator : Boolean);
+Begin
+  ChildNodes['UseEnumerator'].AsBoolean := AUseEnumerator;
+End;
+
+Function TXmlListSettings.GetUseNestedClass() : Boolean;
+Begin
+  Result := ChildNodes['UseNestedClass'].AsBoolean;
+End;
+
+Procedure TXmlListSettings.SetUseNestedClass(Const AUseNestedClass : Boolean);
+Begin
+  ChildNodes['UseNestedClass'].AsBoolean := AUseNestedClass;
+End;
+
+Function TXmlListSettings.GetIsSealed() : Boolean;
+Begin
+  Result := ChildNodes['IsSealed'].AsBoolean;
+End;
+
+Procedure TXmlListSettings.SetIsSealed(Const AIsSealed : Boolean);
+Begin
+  ChildNodes['IsSealed'].AsBoolean := AIsSealed;
+End;
+
+Function TXmlListSettings.GetMethods() : IXmlProcedureDefs;
+Begin
+  Result := ChildNodes['Methods'] As IXmlProcedureDefs;
+End;
+
 Procedure TXMLClassDef.AfterConstruction();
 Begin
   RegisterChildNode('Settings', TXMLClassSettings);
   RegisterChildNode('MsSQLSettings', TXMLMsSQLSettings);
   RegisterChildNode('Properies', TXMLPropertyDefs);
   RegisterChildNode('Procedures', TXmlProcedureDefs);
+  RegisterChildNode('ListSettings', TXmlListSettings);
 
   Inherited AfterConstruction();
 End;
@@ -974,6 +1083,11 @@ End;
 Function TXMLClassDef.GetProcedureDefs() : IXmlProcedureDefs;
 Begin
   Result := ChildNodes['Procedures'] As IXmlProcedureDefs;
+End;
+
+Function TXMLClassDef.GetListSettings() : IXmlListSettings;
+Begin
+  Result := ChildNodes['ListSettings'] As IXmlListSettings;
 End;
 
 Function TXMLClassSettings.GetInHeritsFrom() : String;

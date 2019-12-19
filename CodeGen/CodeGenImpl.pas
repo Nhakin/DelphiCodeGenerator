@@ -171,7 +171,6 @@ Type
     Procedure Clear();
 
   Public
-    Procedure Assign(ASource : TObject); ReIntroduce; Virtual;
     Destructor Destroy(); OverRide;
 
   End;
@@ -190,6 +189,38 @@ Type
   THsPropertyDefsClass = Class Of THsPropertyDefs;
   THsTypeDefsClass = Class Of THsTypeDefs;
   THsProcedureDefsClass = Class Of THsProcedureDefs;
+  THsListSettingsClass = Class Of THsListSettings;
+
+  THsListSettings = Class(TInterfacedObjectEx, IHsListSettings)
+  Strict Private
+    FUseStrict      : Boolean;
+    FUseEnumerator  : Boolean;
+    FUseNestedClass : Boolean;
+    FIsSealed       : Boolean;
+    FMethods        : IHsProcedureDefs;
+
+  Protected
+    Function  GetProcedureDefsClass() : THsProcedureDefsClass; Virtual;
+
+    Function  GetUseStrict() : Boolean; Virtual;
+    Procedure SetUseStrict(Const AUseStrict : Boolean); Virtual;
+
+    Function  GetUseEnumerator() : Boolean; Virtual;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean); Virtual;
+
+    Function  GetUseNestedClass() : Boolean; Virtual;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean); Virtual;
+
+    Function  GetIsSealed() : Boolean; Virtual;
+    Procedure SetIsSealed(Const AIsSealed : Boolean); Virtual;
+
+    Function  GetMethods() : IHsProcedureDefs;
+
+  Public
+    Procedure AfterConstruction(); OverRide;
+    Procedure BeforeDestruction(); OverRide;
+
+  End;
 
   THsClassCodeGenerator = Class(THsCustomGenerator, IHsClassCodeGenerator)
   Private
@@ -199,6 +230,7 @@ Type
     FUseStrict      : Boolean;
     FUseCustomClass : Boolean;
     FMakeList       : Boolean;
+    FListSettings   : IHsListSettings;
     FUseEnumerator  : Boolean;
     FUseNestedClass : Boolean;
     FTrackChange    : Boolean;
@@ -214,6 +246,7 @@ Type
     Procedure Created(); OverRide;
     Function  GetPropertiesClass() : THsPropertyDefsClass; Virtual;
     Function  GetProcedureDefsClass() : THsProcedureDefsClass; Virtual;
+    Function  GetListSettingsClass() : THsListSettingsClass; Virtual;
 
     Function GetFieldAssignType(APropertyType : THsPropertyType) : String;
     Function GetLoadParamType(Const ALoadPrototype : String) : String;
@@ -268,6 +301,7 @@ Type
 
     Function  GetPropertyDefs() : IHsPropertyDefs;
     Function  GetProcedureDefs() : IHsProcedureDefs;
+    Function  GetListSettings() : IHsListSettings;
 
   Public
     Destructor Destroy(); OverRide;
@@ -1003,11 +1037,76 @@ Begin
   InHerited Add(Result As IHsPropertyDef);
 End;
 
+Procedure THsListSettings.AfterConstruction();
+Begin
+  InHerited AfterConstruction();
+
+  FMethods := GetProcedureDefsClass().Create();
+End;
+
+Procedure THsListSettings.BeforeDestruction();
+Begin
+  FMethods := Nil;
+
+  InHerited BeforeDestruction();
+End;
+
+Function THsListSettings.GetProcedureDefsClass() :  THsProcedureDefsClass;
+Begin
+  Result := THsProcedureDefs;
+End;
+
+Function THsListSettings.GetUseStrict() : Boolean;
+Begin
+  Result := FUseStrict;
+End;
+
+Procedure THsListSettings.SetUseStrict(Const AUseStrict : Boolean);
+Begin
+  FUseStrict := AUseStrict;
+End;
+
+Function THsListSettings.GetUseEnumerator() : Boolean;
+Begin
+  Result := FUseEnumerator;
+End;
+
+Procedure THsListSettings.SetUseEnumerator(Const AUseEnumerator : Boolean);
+Begin
+  FUseEnumerator := AUseEnumerator;
+End;
+
+Function THsListSettings.GetUseNestedClass() : Boolean;
+Begin
+  Result := FUseNestedClass;
+End;
+
+Procedure THsListSettings.SetUseNestedClass(Const AUseNestedClass : Boolean);
+Begin
+  FUseNestedClass := AUseNestedClass;
+End;
+
+Function THsListSettings.GetIsSealed() : Boolean;
+Begin
+  Result := FIsSealed;
+End;
+
+Procedure THsListSettings.SetIsSealed(Const AIsSealed : Boolean);
+Begin
+  FIsSealed := AIsSealed;
+End;
+
+Function THsListSettings.GetMethods() : IHsProcedureDefs;
+Begin
+  Result := FMethods;
+End;
+
 Procedure THsClassCodeGenerator.Created();
 Begin
   FPropertyDefs   := GetPropertiesClass().Create();
   FProcedureDefs  := GetProcedureDefsClass().Create();
-
+  FListSettings   := GetListSettingsClass().Create();
+  
   FUseInterface   := False;
   FUseStrict      := False;
   FUseCustomClass := False;
@@ -1023,7 +1122,8 @@ Destructor THsClassCodeGenerator.Destroy();
 Begin
   FPropertyDefs  := Nil;
   FProcedureDefs := Nil;
-  
+  FListSettings  := Nil;
+    
   InHerited Destroy();
 End;
 
@@ -1035,6 +1135,11 @@ End;
 Function  THsClassCodeGenerator.GetProcedureDefsClass() : THsProcedureDefsClass;
 Begin
   Result := THsProcedureDefs;
+End;
+
+Function THsClassCodeGenerator.GetListSettingsClass() : THsListSettingsClass;
+Begin
+  Result := THsListSettings;
 End;
 
 Function THsClassCodeGenerator.GetClsName() : String;
@@ -1165,6 +1270,11 @@ End;
 Function THsClassCodeGenerator.GetProcedureDefs() : IHsProcedureDefs;
 Begin
   Result := FProcedureDefs;
+End;
+
+Function THsClassCodeGenerator.GetListSettings() : IHsListSettings;
+Begin
+  Result := FListSettings;
 End;
 
 Procedure THsClassCodeGenerator.GenerateInterfaceDef(AList : TStringList);
@@ -2611,22 +2721,6 @@ Begin
   FProcedureType := 0;
   FProcedureDef  := '';
   FProcedureImpl.Clear();
-End;
-
-Procedure THsProcedureDef.Assign(ASource : TObject);
-Var lSrc : THsProcedureDef;
-Begin
-{  If ASource Is THsProcedureDef Then
-  Begin
-    lSrc := THsProcedureDef(ASource);
-
-    FProcedureType := lSrc.ProcedureType;
-    FProcedureDef  := lSrc.ProcedureDef;
-    FProcedureImpl.Assign(lSrc.ProcedureImpl);
-  End;{
-  Else
-    Raise EConvertError.CreateResFmt(@SAssignError, [ASource.ClassName, ClassName]);
-}    
 End;
 
 Function THsProcedureDef.GetProcedureType() : Byte;

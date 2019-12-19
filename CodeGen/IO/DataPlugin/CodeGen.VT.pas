@@ -141,8 +141,8 @@ Type
 
     Property Items[Index : Integer] : IHsVTTypeDefNode Read Get Write Put; Default;
 
-    Property VTNode   : PVirtualNode      Read GetVTNode   Write SetVTNode;
-    Property SettingsVisible : Boolean Read GetSettingsVisible Write SetSettingsVisible;
+    Property VTNode          : PVirtualNode Read GetVTNode          Write SetVTNode;
+    Property SettingsVisible : Boolean      Read GetSettingsVisible Write SetSettingsVisible;
 
   End;
 
@@ -167,6 +167,25 @@ Type
 
   End;
 
+  IHsVTListSettingsNode = Interface(IHsListSettings)
+    ['{4B61686E-29A0-2112-9583-02A0574151BC}']
+    Function  GetVTNode() : PVirtualNode;
+    Procedure SetVTNode(AVTNode : PVirtualNode);
+
+    Function  GetMethods() : IHsVTProcedureDefsNode;
+
+    Function  GetSettings() : IHsVTSettingNodes;
+
+    Function  GetSettingsVisible() : Boolean;
+    Procedure SetSettingsVisible(Const ASettingsVisible : Boolean);
+
+    Property VTNode          : PVirtualNode           Read GetVTNode          Write SetVTNode;
+    Property Methods         : IHsVTProcedureDefsNode Read GetMethods;
+    Property Settings        : IHsVTSettingNodes      Read GetSettings;
+    Property SettingsVisible : Boolean                Read GetSettingsVisible Write SetSettingsVisible;
+
+  End;
+
   IHsVTClassCodeGeneratorNode = Interface(IHsClassCodeGenerator)
     ['{4B61686E-29A0-2112-8433-CAA70629FB4A}']
     Function  GetSettings() : IHsVTSettingNodes;
@@ -176,14 +195,16 @@ Type
 
     Function  GetPropertyDefs() : IHsVTPropertyDefsNode;
     Function  GetProcedureDefs() : IHsVTProcedureDefsNode;
+    Function  GetListSettings() : IHsVTListSettingsNode;
 
     Procedure Assign(ASource : IHsClassCodeGenerator);
 
-    Property Settings : IHsVTSettingNodes Read GetSettings Write SetSettings;
+    Property Settings      : IHsVTSettingNodes Read GetSettings      Write SetSettings;
     Property MsSQLSettings : IHsVTSettingNodes Read GetMsSQLSettings Write SetMsSQLSettings;
 
     Property PropertyDefs  : IHsVTPropertyDefsNode  Read GetPropertyDefs;
     Property ProcedureDefs : IHsVTProcedureDefsNode Read GetProcedureDefs;
+    Property ListSettings  : IHsVTListSettingsNode  Read GetListSettings;
 
   End;
 
@@ -372,7 +393,7 @@ Type
 
     Procedure DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
     Procedure DoOnCodeChange(Sender : TObject);
-        
+
   Protected
     Procedure Created(); OverRide;
 
@@ -407,23 +428,53 @@ Type
 
   End;
 
+  THsVTListSettingsNode = Class(THsListSettings, IHsVTListSettingsNode)
+  Strict Private
+    FVTNode          : PVirtualNode;
+    FSettings        : IHsVTSettingNodes;
+    FSettingsVisible : Boolean;
+
+    Procedure DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
+
+  Protected
+    Function GetProcedureDefsClass() :  THsProcedureDefsClass; OverRide;
+
+    Function  GetVTNode() : PVirtualNode;
+    Procedure SetVTNode(AVTNode : PVirtualNode);
+
+    Function  GetMethods() : IHsVTProcedureDefsNode; OverLoad;
+
+    Function  GetSettings() : IHsVTSettingNodes;
+
+    Function  GetSettingsVisible() : Boolean;
+    Procedure SetSettingsVisible(Const ASettingsVisible : Boolean);
+
+    Procedure SetUseStrict(Const AUseStrict : Boolean); OverRide;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean); OverRide;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean); OverRide;
+    Procedure SetIsSealed(Const AIsSealed : Boolean); OverRide;
+
+  Public
+    Procedure AfterConstruction(); OverRide;
+    Procedure BeforeDestruction(); OverRide;
+
+  End;
+
   THsVTClassCodeGeneratorNode = Class(THsClassCodeGenerator, IHsVTClassCodeGeneratorNode)
   Private
-    FSettings : IHsVTSettingNodes;
+    FSettings      : IHsVTSettingNodes;
     FMsSQLSettings : IHsVTSettingNodes;
 
     Procedure DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
 
   Protected
-    Procedure Created(); OverRide;
     Function  GetPropertiesClass() : THsPropertyDefsClass; OverRide;
     Function  GetProcedureDefsClass() : THsProcedureDefsClass; OverRide;
+    Function  GetListSettingsClass() : THsListSettingsClass; OverRide;
 
-    Function MyGetPropertyDefs() : IHsVTPropertyDefsNode;
-    Function IHsVTClassCodeGeneratorNode.GetPropertyDefs = MyGetPropertyDefs;
-
-    Function MyGetProcedureDefs() : IHsVTProcedureDefsNode;
-    Function IHsVTClassCodeGeneratorNode.GetProcedureDefs = MyGetProcedureDefs;
+    Function GetPropertyDefs() : IHsVTPropertyDefsNode; OverLoad;
+    Function GetProcedureDefs() : IHsVTProcedureDefsNode; OverLoad;
+    Function GetListSettings() : IHsVTListSettingsNode; OverLoad;
 
     Procedure Assign(ASource : IHsClassCodeGenerator);
 
@@ -447,7 +498,8 @@ Type
     Procedure SetTableName(Const ATableName : String); OverRide;
 
   Public
-    Destructor Destroy(); OverRide;
+    Procedure AfterConstruction(); OverRide;
+    Procedure BeforeDestruction(); OverRide;
 
   End;
 
@@ -648,6 +700,7 @@ Begin
   
   FVTNode := Nil;
   FNodeCaption := 'Settings';
+  FSettingVisible := True;
 End;
 
 Function THsVTSettingNodes.MyGet(Index : Integer) : IHsVTSettingNode;
@@ -732,7 +785,14 @@ End;
 
 Procedure THsVTSettingNodes.SetVTNode(ANode : PVirtualNode);
 Begin
-  FVTNode := ANode;
+  If FVTNode <> ANode Then
+  Begin
+    FVTNode := ANode;
+    If FSettingVisible Then
+      FVTNode.States := FVTNode.States + [vsVisible]
+    Else
+      FVTNode.States := FVTNode.States - [vsVisible];
+  End;
 End;
 
 Function THsVTSettingNodes.GetNodeCaption() : String;
@@ -1215,9 +1275,125 @@ Begin
   Result := InHerited Add(AItem);
 End;
 
-Procedure THsVTClassCodeGeneratorNode.Created();
+Function THsVTListSettingsNode.GetProcedureDefsClass() :  THsProcedureDefsClass;
 Begin
-  InHerited Created();
+  Result := THsVTProcedureDefs;
+End;
+
+
+Function THsVTListSettingsNode.GetVTNode() : PVirtualNode;
+Begin
+  Result := FVTNode;
+End;
+
+Procedure THsVTListSettingsNode.SetVTNode(AVTNode : PVirtualNode);
+Begin
+  If FVTNode <> AVTNode Then
+  Begin
+    FVTNode := AVTNode;
+    If FSettingsVisible Then
+      FVTNode.States := FVTNode.States + [vsVisible]
+    Else
+      FVTNode.States := FVTNode.States - [vsVisible];
+  End;
+End;
+
+Procedure THsVTListSettingsNode.AfterConstruction();
+Begin
+  InHerited AfterConstruction();
+
+  FSettings := THsVTSettingNodes.Create();
+
+  FSettings.AddBooleanSetting('UseStrict').OnChange      := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('UseEnumerator').OnChange  := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('UseNestedClass').OnChange := DoSetSettingProperties;
+  FSettings.AddBooleanSetting('IsSealed').OnChange       := DoSetSettingProperties;
+
+  FSettingsVisible := False;
+
+  SetUseStrict(False);
+  SetUseEnumerator(False);
+  SetUseNestedClass(False);
+  SetIsSealed(False);
+End;
+
+Procedure THsVTListSettingsNode.BeforeDestruction();
+Begin
+  FSettings := Nil;
+
+  InHerited BeforeDestruction();
+End;
+
+Function THsVTListSettingsNode.GetMethods() : IHsVTProcedureDefsNode;
+Begin
+  Result := InHerited GetMethods() As IHsVTProcedureDefsNode;
+End;
+
+Function THsVTListSettingsNode.GetSettings() : IHsVTSettingNodes;
+Begin
+  Result := FSettings;
+End;
+
+Function THsVTListSettingsNode.GetSettingsVisible() : Boolean;
+Begin
+  If Assigned(FVTNode) Then
+    Result := vsVisible In FVTNode.States
+  Else
+    Result := FSettingsVisible;
+End;
+
+Procedure THsVTListSettingsNode.SetSettingsVisible(Const ASettingsVisible : Boolean);
+Begin
+  If Assigned(FVTNode) Then
+  Begin
+    If ASettingsVisible Then
+      FVTNode.States := FVTNode.States + [vsVisible]
+    Else
+      FVTNode.States := FVTNode.States - [vsVisible];
+  End
+  Else
+    FSettingsVisible := ASettingsVisible;
+End;
+
+Procedure THsVTListSettingsNode.DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
+Begin
+  If SameText(Sender.SettingName, 'UseStrict') Then
+    InHerited SetUseStrict(Sender.SettingValue)
+  Else If SameText(Sender.SettingName, 'UseEnumerator') Then
+    InHerited SetUseEnumerator(Sender.SettingValue)
+  Else If SameText(Sender.SettingName, 'UseNestedClass') Then
+    InHerited SetUseNestedClass(Sender.SettingValue)
+  Else If SameText(Sender.SettingName, 'IsSealed') Then
+    InHerited SetIsSealed(Sender.SettingValue);
+End;
+
+Procedure THsVTListSettingsNode.SetUseStrict(Const AUseStrict : Boolean);
+Begin
+  FSettings.NodeSettingByName('UseStrict').SettingValue := AUseStrict;
+  InHerited SetUseStrict(AUseStrict);
+End;
+
+Procedure THsVTListSettingsNode.SetUseEnumerator(Const AUseEnumerator : Boolean);
+Begin
+  FSettings.NodeSettingByName('UseEnumerator').SettingValue := AUseEnumerator;
+  InHerited SetUseEnumerator(AUseEnumerator);
+End;
+
+Procedure THsVTListSettingsNode.SetUseNestedClass(Const AUseNestedClass : Boolean);
+Begin
+  FSettings.NodeSettingByName('UseNestedClass').SettingValue := AUseNestedClass;
+  InHerited SetUseNestedClass(AUseNestedClass);
+End;
+
+Procedure THsVTListSettingsNode.SetIsSealed(Const AIsSealed : Boolean);
+Begin
+  FSettings.NodeSettingByName('IsSealed').SettingValue := AIsSealed;
+  InHerited SetIsSealed(AIsSealed);
+End;
+
+Procedure THsVTClassCodeGeneratorNode.AfterConstruction();
+Begin
+  InHerited AfterConstruction();
 
   FSettings := THsVTSettingNodes.Create();
   FSettings.AddStringSetting('InHeritsFrom').OnChange    := DoSetSettingProperties;
@@ -1235,6 +1411,8 @@ Begin
   FMsSQLSettings.AddStringSetting('AdoQueryClassName').OnChange := DoSetSettingProperties;
   FMsSQLSettings.AddStringSetting('TableName').OnChange := DoSetSettingProperties;
 
+//  FSettings.SettingVisible := True;
+
   SetClsName('MyClass');
   SetUseInterface(False);
   SetUseStrict(False);
@@ -1249,10 +1427,12 @@ Begin
   SetTableName('');
 End;
 
-Destructor THsVTClassCodeGeneratorNode.Destroy();
+Procedure THsVTClassCodeGeneratorNode.BeforeDestruction();
 Begin
   FSettings := Nil;
-  InHerited Destroy();
+  FMsSQLSettings := Nil;
+  
+  InHerited BeforeDestruction();
 End;
 
 Procedure THsVTClassCodeGeneratorNode.Assign(ASource : IHsClassCodeGenerator);
@@ -1270,7 +1450,7 @@ Begin
 
   For X := 0 To ASource.PropertyDefs.Count - 1 Do
   Begin
-    With MyGetPropertyDefs().Add() Do
+    With GetPropertyDefs().Add() Do
     Begin
       PropertyName  := ASource.PropertyDefs[X].PropertyName;
       PropertyType  := ASource.PropertyDefs[X].PropertyType;
@@ -1316,14 +1496,19 @@ Begin
     InHerited SetAdoQueryClassName(Sender.SettingValue);
 End;
 
-Function THsVTClassCodeGeneratorNode.MyGetPropertyDefs() : IHsVTPropertyDefsNode;
+Function THsVTClassCodeGeneratorNode.GetPropertyDefs() : IHsVTPropertyDefsNode;
 Begin
   Result := InHerited GetPropertyDefs() As IHsVTPropertyDefsNode;
 End;
 
-Function THsVTClassCodeGeneratorNode.MyGetProcedureDefs() : IHsVTProcedureDefsNode;
+Function THsVTClassCodeGeneratorNode.GetProcedureDefs() : IHsVTProcedureDefsNode;
 Begin
   Result := InHerited GetProcedureDefs() As IHsVTProcedureDefsNode;
+End;
+
+Function THsVTClassCodeGeneratorNode.GetListSettings() : IHsVTListSettingsNode;
+Begin
+  Result := InHerited GetListSettings() As IHsVTListSettingsNode;
 End;
 
 Function THsVTClassCodeGeneratorNode.GetPropertiesClass() : THsPropertyDefsClass;
@@ -1334,6 +1519,11 @@ End;
 Function THsVTClassCodeGeneratorNode.GetProcedureDefsClass() : THsProcedureDefsClass;
 Begin
   Result := THsVTProcedureDefs;
+End;
+
+Function THsVTClassCodeGeneratorNode.GetListSettingsClass() : THsListSettingsClass;
+Begin
+  Result := THsVTListSettingsNode;
 End;
 
 Procedure THsVTClassCodeGeneratorNode.SetInHeritsFrom(Const AInHeritsFrom : String);
@@ -1664,7 +1854,36 @@ Begin
           IsOverRide          := ASource.ClassDefs[X].ProcedureDefs[Y].IsOverRide;
           IsReintroduce       := ASource.ClassDefs[X].ProcedureDefs[Y].IsReIntroduce;
           IsOverLoad          := ASource.ClassDefs[X].ProcedureDefs[Y].IsOverLoad;
+          IsFinal             := ASource.ClassDefs[X].ProcedureDefs[Y].IsFinal;
           ShowInInterface     := ASource.ClassDefs[X].ProcedureDefs[Y].ShowInInterface;
+        End;
+      End;
+
+      With GetListSettings() Do
+      Begin
+        UseStrict      := ASource.ClassDefs[X].ListSettings.UseStrict;
+        UseEnumerator  := ASource.ClassDefs[X].ListSettings.UseEnumerator;
+        UseNestedClass := ASource.ClassDefs[X].ListSettings.UseNestedClass;
+        IsSealed       := ASource.ClassDefs[X].ListSettings.IsSealed;
+
+        Methods.Clear();
+        For Y := 0 To ASource.ClassDefs[X].ListSettings.Methods.Count - 1 Do
+        Begin
+          With Methods.Add() Do
+          Begin
+            ProcedureParameters := ASource.ClassDefs[X].ListSettings.Methods[Y].ProcedureParameters;
+            ProcedureName       := ASource.ClassDefs[X].ListSettings.Methods[Y].ProcedureName;
+            ProcedureImpl.Text  := ASource.ClassDefs[X].ListSettings.Methods[Y].ProcedureImpl.Text;
+            ResultType          := ASource.ClassDefs[X].ListSettings.Methods[Y].ResultType;
+            ProcedureScope      := ASource.ClassDefs[X].ListSettings.Methods[Y].ProcedureScope;
+            IsVirtual           := ASource.ClassDefs[X].ListSettings.Methods[Y].IsVirtual;
+            IsAbstract          := ASource.ClassDefs[X].ListSettings.Methods[Y].IsAbstract;
+            IsOverRide          := ASource.ClassDefs[X].ListSettings.Methods[Y].IsOverRide;
+            IsReintroduce       := ASource.ClassDefs[X].ListSettings.Methods[Y].IsReIntroduce;
+            IsOverLoad          := ASource.ClassDefs[X].ListSettings.Methods[Y].IsOverLoad;
+            IsFinal             := ASource.ClassDefs[X].ListSettings.Methods[Y].IsFinal;
+            ShowInInterface     := ASource.ClassDefs[X].ListSettings.Methods[Y].ShowInInterface;
+          End;
         End;
       End;
     End;

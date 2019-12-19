@@ -588,7 +588,6 @@ Begin
       Begin
         With ProcedureDefs.Add() Do
         Begin
-//          ProcedureType       := Generator.ClassDefs[X].ProcedureDefs[Y].ProcedureType;
           ProcedureParameters := Generator.ClassDefs[X].ProcedureDefs[Y].ProcedureParameters;
           ProcedureName       := Generator.ClassDefs[X].ProcedureDefs[Y].ProcedureName;
           ProcedureDef        := Generator.ClassDefs[X].ProcedureDefs[Y].ProcedureDef;
@@ -602,6 +601,35 @@ Begin
           IsOverLoad          := Generator.ClassDefs[X].ProcedureDefs[Y].IsOverLoad;
           IsFinal             := Generator.ClassDefs[X].ProcedureDefs[Y].IsFinal;
           ShowInInterface     := Generator.ClassDefs[X].ProcedureDefs[Y].ShowInInterface;
+        End;
+      End;
+
+      With Generator.ClassDefs[X].ListSettings Do
+      Begin
+        ListSettings.UseStrict      := UseStrict;
+        ListSettings.UseEnumerator  := UseEnumerator;
+        ListSettings.UseNestedClass := UseNestedClass;
+        ListSettings.IsSealed       := IsSealed;
+        ListSettings.Methods.Clear();
+
+        For Y := 0 To Generator.ClassDefs[X].ListSettings.Methods.Count - 1 Do
+        Begin
+          With ListSettings.Methods.Add() Do
+          Begin
+            ProcedureParameters := Generator.ClassDefs[X].ListSettings.Methods[Y].ProcedureParameters;
+            ProcedureName       := Generator.ClassDefs[X].ListSettings.Methods[Y].ProcedureName;
+            ProcedureDef        := Generator.ClassDefs[X].ListSettings.Methods[Y].ProcedureDef;
+            ResultType          := THsFunctionResultType(GetEnumValue(TypeInfo(THsFunctionResultType), Generator.ClassDefs[X].ListSettings.Methods[Y].ResultType));
+            ProcedureScope      := THsFunctionScope(GetEnumValue(TypeInfo(THsFunctionScope), Generator.ClassDefs[X].ListSettings.Methods[Y].ProcedureScope));
+            ProcedureImpl.Text  := Generator.ClassDefs[X].ListSettings.Methods[Y].ProcedureImpl;
+            IsVirtual           := Generator.ClassDefs[X].ListSettings.Methods[Y].IsVirtual;
+            IsAbstract          := Generator.ClassDefs[X].ListSettings.Methods[Y].IsAbstract;
+            IsOverRide          := Generator.ClassDefs[X].ListSettings.Methods[Y].IsOverRide;
+            IsReintroduce       := Generator.ClassDefs[X].ListSettings.Methods[Y].IsReIntroduce;
+            IsOverLoad          := Generator.ClassDefs[X].ListSettings.Methods[Y].IsOverLoad;
+            IsFinal             := Generator.ClassDefs[X].ListSettings.Methods[Y].IsFinal;
+            ShowInInterface     := Generator.ClassDefs[X].ListSettings.Methods[Y].ShowInInterface;
+          End;
         End;
       End;
     End;
@@ -714,6 +742,35 @@ Begin
               ShowInInterface     := ProcedureDefs[Y].ShowInInterface;
             End;
           End;
+
+          If AUnitGenerator.ClassDefs[X].MakeList Then
+            With AUnitGenerator.ClassDefs[X].ListSettings Do
+            Begin
+              ListSettings.UseStrict      := UseStrict;
+              ListSettings.UseEnumerator  := UseEnumerator;
+              ListSettings.UseNestedClass := UseNestedClass;
+              ListSettings.IsSealed       := IsSealed;
+              ListSettings.Methods.Clear();
+
+              For Y := 0 To AUnitGenerator.ClassDefs[X].ListSettings.Methods.Count - 1 Do
+              Begin
+                With ListSettings.Methods.Add() Do
+                Begin
+                  ProcedureParameters := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].ProcedureParameters;
+                  ProcedureName       := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].ProcedureName;
+                  ProcedureImpl       := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].ProcedureImpl.Text;
+                  ResultType          := GetEnumName(TypeInfo(THsFunctionResultType), Ord(AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].ResultType));
+                  ProcedureScope      := GetEnumName(TypeInfo(THsFunctionScope), Ord(AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].ProcedureScope));
+                  IsVirtual           := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsVirtual;
+                  IsAbstract          := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsAbstract;
+                  IsOverRide          := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsOverRide;
+                  IsReintroduce       := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsReIntroduce;
+                  IsOverLoad          := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsOverLoad;
+                  IsFinal             := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsFinal;
+                  ShowInInterface     := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].ShowInInterface;
+                End;
+              End;
+            End;
         End;
       End;
 

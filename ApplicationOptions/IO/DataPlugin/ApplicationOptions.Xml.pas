@@ -54,7 +54,7 @@ Type
 
     Function GetInterfaceState() : TInterfaceState;
                         
-    Function IApplicationOptions.GetGlobalOptions  = MyGetGlobalOptions;
+    Function IApplicationOptions.GetGlobalOptions = MyGetGlobalOptions;
     Function IApplicationOptions.GetMsSqlOptions  = MyGetMsSqlOptions;
     Function IApplicationOptions.GetSearchOptions = MyGetSearchOptions;
 

@@ -167,6 +167,30 @@ Type
 
   End;  
 
+  IHsListSettings = Interface(IInterfaceEx)
+    ['{4B61686E-29A0-2112-9583-02A0574151BC}']
+    Function  GetUseStrict() : Boolean;
+    Procedure SetUseStrict(Const AUseStrict : Boolean);
+
+    Function  GetUseEnumerator() : Boolean;
+    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
+
+    Function  GetUseNestedClass() : Boolean;
+    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean);
+
+    Function  GetIsSealed() : Boolean;
+    Procedure SetIsSealed(Const AIsSealed : Boolean);
+
+    Function  GetMethods() : IHsProcedureDefs;
+
+    Property UseStrict      : Boolean          Read GetUseStrict      Write SetUseStrict;
+    Property UseEnumerator  : Boolean          Read GetUseEnumerator  Write SetUseEnumerator;
+    Property UseNestedClass : Boolean          Read GetUseNestedClass Write SetUseNestedClass;
+    Property IsSealed       : Boolean          Read GetIsSealed       Write SetIsSealed;
+    Property Methods        : IHsProcedureDefs Read GetMethods;
+
+  End;
+
   IHsClassCodeGenerator = Interface(IInterfaceEx)
     ['{4B61686E-29A0-2112-884B-92657332CDFB}']
     //Methods
@@ -176,7 +200,6 @@ Type
 
     Procedure GenerateMSSqlLoadCode(AList : TStringList);
     Procedure GenerateMSSqlSaveCode(AList : TStringList);
-//    Function  GenerateUnitCode(Const AUnitName : String) : String;
 
     //Properties
     Function  GetClsName() : String;
@@ -196,6 +219,8 @@ Type
 
     Function  GetMakeList() : Boolean;
     Procedure SetMakeList(Const AMakeList : Boolean);
+
+    Function  GetListSettings() : IHsListSettings;
 
     Function  GetUseEnumerator() : Boolean;
     Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
@@ -217,16 +242,17 @@ Type
     Function  GetPropertyDefs() : IHsPropertyDefs;
     Function  GetProcedureDefs() : IHsProcedureDefs;
 
-    Property ClsName        : String        Read GetClsName        Write SetClsName;
-    Property InHeritsFrom   : String        Read GetInHeritsFrom   Write SetInHeritsFrom;
-    Property UseCustomClass : Boolean       Read GetUseCustomClass Write SetUseCustomClass;
-    Property UseInterface   : Boolean       Read GetUseInterface   Write SetUseInterface;
-    Property UseStrict      : Boolean       Read GetUseStrict      Write SetUseStrict;
-    Property MakeList       : Boolean       Read GetMakeList       Write SetMakeList;
-    Property UseEnumerator  : Boolean       Read GetUseEnumerator  Write SetUseEnumerator;
-    Property UseNestedClass : Boolean       Read GetUseNestedClass Write SetUseNestedClass;
-    Property TrackChange    : Boolean       Read GetTrackChange    Write SetTrackChange;
-    Property DataType       : THsDataSource Read GetDataType       Write SetDataType;
+    Property ClsName        : String          Read GetClsName        Write SetClsName;
+    Property InHeritsFrom   : String          Read GetInHeritsFrom   Write SetInHeritsFrom;
+    Property UseCustomClass : Boolean         Read GetUseCustomClass Write SetUseCustomClass;
+    Property UseInterface   : Boolean         Read GetUseInterface   Write SetUseInterface;
+    Property UseStrict      : Boolean         Read GetUseStrict      Write SetUseStrict;
+    Property MakeList       : Boolean         Read GetMakeList       Write SetMakeList;
+    Property ListSettings   : IHsListSettings Read GetListSettings;
+    Property UseEnumerator  : Boolean         Read GetUseEnumerator  Write SetUseEnumerator;
+    Property UseNestedClass : Boolean         Read GetUseNestedClass Write SetUseNestedClass;
+    Property TrackChange    : Boolean         Read GetTrackChange    Write SetTrackChange;
+    Property DataType       : THsDataSource   Read GetDataType       Write SetDataType;
 
     Property AdoQueryClassName : String Read GetAdoQueryClassName Write SetAdoQueryClassName;
     Property TableName         : String Read GetTableName         Write SetTableName;

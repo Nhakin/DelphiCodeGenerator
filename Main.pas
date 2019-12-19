@@ -455,6 +455,7 @@ begin
       vstProject.FocusedNode   := lNode.LastChild;
 
       MemoPreview.Text := FTreeDataEx.GenerateUnitCode();
+      UpdatePropertyDefNodeVisible();
     End;
   End;
 end;
@@ -788,7 +789,8 @@ Begin
     With FTreeDataEx.ClassDefs[X] Do
     Begin
       MsSQLSettings.SettingVisible := DataType In [dsMSSql];
-
+      ListSettings.SettingsVisible := MakeList;
+      
       For Y := 0 To PropertyDefs.Count - 1 Do
         With PropertyDefs[Y], Settings Do
         Begin
@@ -1005,7 +1007,8 @@ begin
        Supports(lNodeData^, IHsVTClassCodeGeneratorsNode) Or
        Supports(lNodeData^, IHsVTTypeDefsNode) Or
        Supports(lNodeData^, IHsVTProcedureDefsNode) Or
-       (Supports(lNodeData^, IHsVTSettingNode) And (Column = 1)) Then
+       (Supports(lNodeData^, IHsVTSettingNode) And (Column = 1)) Or
+       Supports(lNodeData^, IHsVTListSettingsNode) Then
     Begin
       TargetCanvas.Brush.Color := clBtnFace;
       TargetCanvas.FillRect(CellRect);
@@ -1206,6 +1209,7 @@ Var lNodeData : PInterface;
     lMethod       : IHsVTProcedureDefNode;     
     lNodeSettings : IHsVTSettingNodes;
     lNodeSetting  : IHsVTSettingNode;
+    lNodeListSettings : IHsVTListSettingsNode;
 begin
   CellText := '';
 
@@ -1281,6 +1285,11 @@ begin
       Else If Column = 2 Then
         CellText := GetEnumName(TypeInfo(THsPropertyType), Ord(lNodeProp.PropertyType));
     End
+    Else If Supports(lNodeData^, IHsVTListSettingsNode, lNodeListSettings) Then
+    Begin
+      If Column = 1 Then
+        CellText := 'List Settings';
+    End 
     Else
       CellText := '- ' + GetInterfaceName(lNodeData^);
 
@@ -1291,11 +1300,12 @@ end;
 
 procedure TFrmMain.vstProjectInitChildren(Sender: TBaseVirtualTree;
   Node: PVirtualNode; var ChildCount: Cardinal);
-Var lNodeData  : PInterface;
-    lNodeProp  : IHsVTPropertyDefNode;
-    lNodeCount : IInterfaceListEx;
-    lMethods   : IHsVTProcedureDefsNode;
-    lMethod    : IHsVTProcedureDefNode;
+Var lNodeData    : PInterface;
+    lNodeProp    : IHsVTPropertyDefNode;
+    lNodeCount   : IInterfaceListEx;
+    lMethods     : IHsVTProcedureDefsNode;
+    lMethod      : IHsVTProcedureDefNode;
+    lLstSettings : IHsVTListSettingsNode;
 begin
   lNodeData := Sender.GetNodeData(Node);
   If Assigned(lNodeData) Then
@@ -1305,7 +1315,7 @@ begin
     Else If Supports(lNodeData^, IHsVTTypeDefNode) Then
       ChildCount := 2
     Else If Supports(lNodeData^, IHsVTClassCodeGeneratorNode) Then
-      ChildCount := 4
+      ChildCount := 5
     Else If Supports(lNodeData^, IHsVTPropertyDefNode, lNodeProp) Then
       ChildCount := lNodeProp.Settings.Count
     Else If Supports(lNodeData^, IInterfaceListEx, lNodeCount) Then
@@ -1313,14 +1323,15 @@ begin
     Else If Supports(lNodeData^, IHsVTProcedureDefsNode, lMethods) Then
       ChildCount := lMethods.Count
     Else If Supports(lNodeData^, IHsVTProcedureDefNode, lMethod) Then
-      ChildCount := lMethod.Settings.Count;
+      ChildCount := lMethod.Settings.Count
+    Else If Supports(lNodeData^, IHsVTListSettingsNode, lLstSettings) Then
+      ChildCount := lLstSettings.Settings.Count + 1;
   End;
 end;
 
 procedure TFrmMain.vstProjectInitNode(Sender: TBaseVirtualTree; ParentNode,
   Node: PVirtualNode; var InitialStates: TVirtualNodeInitStates);
-Var lNodeData  : PInterface;
-
+Var lNodeData     : PInterface;
     lNodeUnit     : IHsVTUnitGeneratorNode;
     lNodeTypeDefs : IHsVTTypeDefsNode;
     lNodeTypeDef  : IHsVTTypeDefNode;
@@ -1331,6 +1342,7 @@ Var lNodeData  : PInterface;
     lNodeMethods  : IHsVTProcedureDefsNode;
     lNodeMethod   : IHsVTProcedureDefNode;
     lNodeSettings : IHsVTSettingNodes;
+    lLstSettings  : IHsVTListSettingsNode;
 begin
   If Assigned(ParentNode) Then
   Begin
@@ -1408,16 +1420,23 @@ begin
             lNodeCls.MsSQLSettings.VTNode := Node;
             If lNodeCls.MsSQLSettings.Count > 0 Then
               InitialStates := InitialStates + [ivsHasChildren];
-            Node.States := Node.States - [vsVisible];
+//            Node.States := Node.States - [vsVisible];
           End
           Else If Node.Index = 2 Then
+          Begin
+            PPointer(lNodeData)^ := Pointer(lNodeCls.ListSettings);
+            lNodeCls.ListSettings.VTNode := Node;
+            InitialStates := InitialStates + [ivsHasChildren];
+//            lNodeCls.ListSettings.SettingsVisible := False;
+          End
+          Else If Node.Index = 3 Then
           Begin
             PPointer(lNodeData)^ := Pointer(lNodeCls.PropertyDefs);
 
             If lNodeCls.PropertyDefs.Count > 0 Then
               InitialStates := InitialStates + [ivsHasChildren];
           End
-          Else If Node.Index = 3 Then
+          Else If Node.Index = 4 Then
           Begin
             PPointer(lNodeData)^ := Pointer(lNodeCls.ProcedureDefs);
 
@@ -1481,6 +1500,22 @@ begin
           If Not lNodeMethod.Settings[Node.Index].SettingVisible Then
             Node.States := Node.States - [vsVisible];
           lNodeMethod.Settings[Node.Index].VTNode := Node;
+        End;
+      End
+      Else If Supports(lNodeData^, IHsVTListSettingsNode, lLstSettings) Then
+      Begin
+        lNodeData := Sender.GetNodeData(Node);
+
+        If Assigned(lNodeData) Then
+        Begin
+          If Node.Index < lLstSettings.Settings.Count Then
+            PPointer(lNodeData)^ := Pointer(lLstSettings.Settings[Node.Index])
+          Else
+          Begin
+            PPointer(lNodeData)^ := Pointer(lLstSettings.Methods);
+            If lLstSettings.Methods.Count > 0 Then
+              InitialStates := InitialStates + [ivsHasChildren];
+          End;
         End;
       End;
     End;
@@ -1626,5 +1661,6 @@ Initialization
   RegisterInterface('IHsVTTypeDefNode', IHsVTTypeDefNode);
   RegisterInterface('IHsVTProcedureDefsNode', IHsVTProcedureDefsNode);
   RegisterInterface('IHsVTProcedureDefNode', IHsVTProcedureDefNode);
+  RegisterInterface('IHsVTListSettingsNode', IHsVTListSettingsNode);
 
 end.
