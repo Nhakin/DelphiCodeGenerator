@@ -222,12 +222,6 @@ Type
 
     Function  GetListSettings() : IHsListSettings;
 
-    Function  GetUseEnumerator() : Boolean;
-    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean);
-
-    Function  GetUseNestedClass() : Boolean;
-    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean);
-
     Function  GetTrackChange() : Boolean;
     Procedure SetTrackChange(Const ATrackChange : Boolean);
 
@@ -249,8 +243,6 @@ Type
     Property UseStrict      : Boolean         Read GetUseStrict      Write SetUseStrict;
     Property MakeList       : Boolean         Read GetMakeList       Write SetMakeList;
     Property ListSettings   : IHsListSettings Read GetListSettings;
-    Property UseEnumerator  : Boolean         Read GetUseEnumerator  Write SetUseEnumerator;
-    Property UseNestedClass : Boolean         Read GetUseNestedClass Write SetUseNestedClass;
     Property TrackChange    : Boolean         Read GetTrackChange    Write SetTrackChange;
     Property DataType       : THsDataSource   Read GetDataType       Write SetDataType;
 

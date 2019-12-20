@@ -93,7 +93,7 @@ Type
     Function  GetHaveDestructor() : Boolean;
 
     Function Add(Const Item : IHsPropertyDef): Integer; OverLoad;
-    Function Add() : IHsPropertyDef; OverLoad;
+    Function Add() : IHsPropertyDef; ReIntroduce; OverLoad;
 
     Function  IHsPropertyDefs.Get = MyGet;
     Procedure IHsPropertyDefs.Put = MyPut;
@@ -181,7 +181,7 @@ Type
     Function  Get(Index : Integer) : IHsProcedureDef; OverLoad;
     Procedure Put(Index : Integer; Const Item : IHsProcedureDef); OverLoad;
 
-    Function Add() : IHsProcedureDef; OverLoad;
+    Function Add() : IHsProcedureDef; ReIntroduce; OverLoad;
     Function Add(Const AItem : IHsProcedureDef) : Integer; OverLoad;
 
   End;
@@ -231,8 +231,6 @@ Type
     FUseCustomClass : Boolean;
     FMakeList       : Boolean;
     FListSettings   : IHsListSettings;
-    FUseEnumerator  : Boolean;
-    FUseNestedClass : Boolean;
     FTrackChange    : Boolean;
     FDataType       : THsDataSource;
 
@@ -243,7 +241,6 @@ Type
     FProcedureDefs  : IHsProcedureDefs;
 
   Protected
-    Procedure Created(); OverRide;
     Function  GetPropertiesClass() : THsPropertyDefsClass; Virtual;
     Function  GetProcedureDefsClass() : THsProcedureDefsClass; Virtual;
     Function  GetListSettingsClass() : THsListSettingsClass; Virtual;
@@ -281,12 +278,6 @@ Type
     Function  GetMakeList() : Boolean; Virtual;
     Procedure SetMakeList(Const AMakeList : Boolean); Virtual;
 
-    Function  GetUseEnumerator() : Boolean; Virtual;
-    Procedure SetUseEnumerator(Const AUseEnumerator : Boolean); Virtual;
-
-    Function  GetUseNestedClass() : Boolean; Virtual;
-    Procedure SetUseNestedClass(Const AUseNestedClass : Boolean); Virtual;
-
     Function  GetTrackChange() : Boolean; Virtual;
     Procedure SetTrackChange(Const ATrackChange : Boolean); Virtual;
 
@@ -304,21 +295,18 @@ Type
     Function  GetListSettings() : IHsListSettings;
 
   Public
-    Destructor Destroy(); OverRide;
+    Procedure AfterConstruction(); OverRide;
+    Procedure BeforeDestruction(); OverRide;
 
   End;
 
   THsClassCodeGenerators = Class(TInterfaceListEx, IHsClassCodeGenerators)
   Protected
-    Function  MyGet(Index : Integer) : IHsClassCodeGenerator;
-    Procedure MyPut(Index : Integer; Const Item : IHsClassCodeGenerator);
-    Function  MyAdd() : IHsClassCodeGenerator;
+    Function  Get(Index : Integer) : IHsClassCodeGenerator; OverLoad;
+    Procedure Put(Index : Integer; Const Item : IHsClassCodeGenerator); OverLoad;
+    Function  Add() : IHsClassCodeGenerator; OverLoad;
 
     Procedure Delete(Const Item : IHsClassCodeGenerator); OverLoad;
-    
-    Function  IHsClassCodeGenerators.Get = MyGet;
-    Procedure IHsClassCodeGenerators.Put = MyPut;
-    Function  IHsClassCodeGenerators.Add = MyAdd;
 
   End;
 
@@ -358,13 +346,10 @@ Type
 
   THsTypeDefs = Class(TInterfaceListEx, IHsTypeDefs)
   Protected
-    Function  MyGet(Index : Integer) : IHsTypeDef;
-    Procedure MyPut(Index : Integer; Const Item : IHsTypeDef);
+    Function  Get(Index : Integer) : IHsTypeDef; OverLoad;
+    Procedure Put(Index : Integer; Const Item : IHsTypeDef); OverLoad;
 
-    Function  IHsTypeDefs.Get = MyGet;
-    Procedure IHsTypeDefs.Put = MyPut;
-
-    Function Add() : IHsTypeDef; OverLoad;
+    Function Add() : IHsTypeDef; ReIntroduce; OverLoad;
 
   End;
 
@@ -1101,12 +1086,14 @@ Begin
   Result := FMethods;
 End;
 
-Procedure THsClassCodeGenerator.Created();
+Procedure THsClassCodeGenerator.AfterConstruction();
 Begin
+  InHerited AfterConstruction();
+
   FPropertyDefs   := GetPropertiesClass().Create();
   FProcedureDefs  := GetProcedureDefsClass().Create();
   FListSettings   := GetListSettingsClass().Create();
-  
+
   FUseInterface   := False;
   FUseStrict      := False;
   FUseCustomClass := False;
@@ -1118,13 +1105,13 @@ Begin
   FTableName         := '';
 End;
 
-Destructor THsClassCodeGenerator.Destroy();
+Procedure THsClassCodeGenerator.BeforeDestruction();
 Begin
   FPropertyDefs  := Nil;
   FProcedureDefs := Nil;
   FListSettings  := Nil;
     
-  InHerited Destroy();
+  InHerited BeforeDestruction();
 End;
 
 Function THsClassCodeGenerator.GetPropertiesClass() : THsPropertyDefsClass;
@@ -1200,26 +1187,6 @@ End;
 Procedure THsClassCodeGenerator.SetMakeList(Const AMakeList : Boolean);
 Begin
   FMakeList := AMakeList;
-End;
-
-Function THsClassCodeGenerator.GetUseEnumerator() : Boolean;
-Begin
-  Result := FUseEnumerator;
-End;
-
-Procedure THsClassCodeGenerator.SetUseEnumerator(Const AUseEnumerator : Boolean);
-Begin
-  FUseEnumerator := AUseEnumerator;
-End;
-
-Function THsClassCodeGenerator.GetUseNestedClass() : Boolean;
-Begin
-  Result := FUseNestedClass;
-End;
-
-Procedure THsClassCodeGenerator.SetUseNestedClass(Const AUseNestedClass : Boolean);
-Begin
-  FUseNestedClass := AUseNestedClass;
 End;
 
 Function THsClassCodeGenerator.GetTrackChange() : Boolean;
@@ -1328,7 +1295,7 @@ Begin
 
   If FMakeList Then
   Begin
-    If FUseEnumerator And (FDataType = dsNone) Then
+    If FListSettings.UseEnumerator And (FDataType = dsNone) Then
     Begin
       CreateGUID(lGuidRec.Guid);
       lGuidRec.Int1 := MagicGuid;
@@ -1373,7 +1340,7 @@ Begin
     End
     Else
     Begin
-      If FUseEnumerator Then
+      If FListSettings.UseEnumerator Then
       Begin
         AList.Add('    Function  GetEnumerator() : I' + FClsName + 'Enumerator;');
         AList.Add('');
@@ -1447,7 +1414,7 @@ Begin
     Else If FProcedureDefs[X].ProcedureScope = fsPublic Then
       lPublFunc.Add(FProcedureDefs[X]);
 
-  If FMakeList And FUseNestedClass And (FDataType = dsNone) Then
+  If FMakeList And FListSettings.UseNestedClass And (FDataType = dsNone) Then
   Begin
     lTmpList := TStringList.Create();
     Try
@@ -1457,7 +1424,7 @@ Begin
       Else
         AList.Add('  Private Type');
   (**)
-      If FUseEnumerator Then
+      If FListSettings.UseEnumerator Then
       Begin
         AList.Add('    T' + FClsName + 'Enumerator = Class(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)');
         AList.Add('    Protected');
@@ -1525,7 +1492,7 @@ Begin
   (**)
       AList.Add('  Protected');
       AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
-      If FUseEnumerator Then
+      If FListSettings.UseEnumerator Then
         AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
       AList.Add('');
       AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
@@ -1706,7 +1673,7 @@ Begin
       {$Region ' Lists '}
       If FMakeList Then
       Begin
-        If FUseEnumerator And (FDataType = dsNone) Then
+        If FListSettings.UseEnumerator And (FDataType = dsNone) Then
         Begin
           AList.Add('');
           AList.Add('  T' + FClsName + 'Enumerator = Class(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)');
@@ -1752,7 +1719,7 @@ Begin
           AList.Add('  T' + FClsName + 's = Class(TInterfaceListEx, I' + FClsName + 's)');
           AList.Add('  Protected');
           AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
-          If FUseEnumerator Then
+          If FListSettings.UseEnumerator Then
             AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
           AList.Add('');
           AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
@@ -1795,15 +1762,7 @@ Var lClsName : String;
 Begin
   lTmpList := TStringList.Create();
   Try
-//    If FMakeList And FUseNestedClass And (FDataType = dsNone) Then
-//      If FUseEnumerator Then
-//      Begin
-//        AList.Add('Function T' + FClsName + 'List.T' + FClsName + 'Enumerator.GetCurrent() : I' + FClsName + ';');
-//        AList.Add('Begin');
-//        AList.Add('  Result := InHerited Current As I' + FClsName +  ';');
-//        AList.Add('End;');
-//      End;
-    If FMakeList And FUseNestedClass Then
+    If FMakeList And FListSettings.UseNestedClass Then
     Begin
       FUseCustomClass := False;
       FUseInterface   := True;
@@ -1818,9 +1777,9 @@ Begin
       {$Region ' Constructor / Destructor '}
       If FPropertyDefs.HaveConstructor Then
       Begin
-        If (FDataType In [dsJSon, dsXML]) Or FUseNestedClass Then
+        If (FDataType In [dsJSon, dsXML]) Or FListSettings.UseNestedClass Then
         Begin
-          If FUseNestedClass Then
+          If FListSettings.UseNestedClass Then
             AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.AfterConstruction();')
           Else
             AList.Add('Procedure T' + lClsName + '.AfterConstruction();');
@@ -1879,7 +1838,7 @@ Begin
 
       If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
       Begin
-        If FUseNestedClass Then
+        If FListSettings.UseNestedClass Then
           AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.BeforeDestruction();')
         Else
           AList.Add('Destructor T' + lClsName + '.Destroy();');
@@ -1907,7 +1866,7 @@ Begin
           End;
         AList.Add('');
 
-        If FUseNestedClass Then
+        If FListSettings.UseNestedClass Then
           AList.Add('  InHerited BeforeDestruction();')
         Else
           AList.Add('  InHerited Destroy();');
@@ -1918,7 +1877,7 @@ Begin
 
       If FTrackChange Then
       Begin
-        If FUseNestedClass Then
+        If FListSettings.UseNestedClass Then
           AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Changed();')
         Else
           AList.Add('Procedure T' + lClsName + '.Changed();');
@@ -1930,7 +1889,7 @@ Begin
         AList.Add('End;');
         AList.Add('');
 
-        If FUseNestedClass Then
+        If FListSettings.UseNestedClass Then
           AList.Add('Function T' + FClsName + 'List.T' + FClsName + 'Item.GetModified() : Boolean;')
         Else
           AList.Add('Function T' + lClsName + '.GetModified() : Boolean;');
@@ -1941,7 +1900,7 @@ Begin
       End;
 
       lTmpList.Clear();
-      If FUseNestedClass Then
+      If FListSettings.UseNestedClass Then
         AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Clear();')
       Else
         AList.Add('Procedure T' + lClsName + '.Clear();');
@@ -2060,7 +2019,7 @@ Begin
       End;
       {$EndRegion}
 
-      If FUseNestedClass Then
+      If FListSettings.UseNestedClass Then
         AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Assign(ASource : TObject);')
       Else
         AList.Add('Procedure T' + lClsName + '.Assign(ASource : TObject);');
@@ -2144,7 +2103,7 @@ Begin
 
       For X := 0 To FProcedureDefs.Count - 1 Do
       Begin
-        If FUseNestedClass Then
+        If FListSettings.UseNestedClass Then
           AList.Add(StringReplace(FProcedureDefs[X].GetProcedureDefinition(False), '%ClassName%', 'T' + FClsName + 'List.T' + FClsName + 'Item', [rfReplaceAll, rfIgnoreCase]))
         Else
           AList.Add(StringReplace(FProcedureDefs[X].GetProcedureDefinition(False), '%ClassName%', lClsName, [rfReplaceAll, rfIgnoreCase]));
@@ -2157,7 +2116,7 @@ Begin
           FUseInterface Or (FDataType In [dsJSon, dsXml]),
           FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXml]),
           FTrackChange, FDataType)) <> '' Then
-          If FUseNestedClass Then
+          If FListSettings.UseNestedClass Then
             lTmpList.Add(StringReplace(FPropertyDefs.Items[X].GetPropertyFunctionImplementation(
               FUseInterface Or (FDataType In [dsJSon, dsXml]),
               FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXml]),
@@ -2226,9 +2185,9 @@ Begin
         End
         Else If FUseInterface Then
         Begin
-          If FUseEnumerator Then
+          If FListSettings.UseEnumerator Then
           Begin
-            If FUseNestedClass Then
+            If FListSettings.UseNestedClass Then
               AList.Add('Function T' + FClsName + 'List.T' + FClsName + 'Enumerator.GetCurrent() : I' + FClsName + ';')
             Else
               AList.Add('Function T' + FClsName + 'Enumerator.GetCurrent() : I' + FClsName + ';');
@@ -2237,7 +2196,7 @@ Begin
             AList.Add('End;');
             AList.Add('');
 
-            If FUseNestedClass Then
+            If FListSettings.UseNestedClass Then
               AList.Add('Function T' + FClsName + 'List.GetEnumerator() : I' + FClsName + 'Enumerator;')
             Else
               AList.Add('Function T' + FClsName + 's.GetEnumerator() : I' + FClsName + 'Enumerator;');
@@ -2248,7 +2207,7 @@ Begin
             AList.Add('');
           End;
 
-          If FUseNestedClass Then
+          If FListSettings.UseNestedClass Then
             lClsName := FClsName + 'List'
           Else
             lClsName := FClsName + 's';
@@ -2690,12 +2649,12 @@ Begin
   InHerited Add(Result);
 End;
 
-Function THsTypeDefs.MyGet(Index : Integer) : IHsTypeDef;
+Function THsTypeDefs.Get(Index : Integer) : IHsTypeDef;
 Begin
   Supports(InHerited Items[Index], IHsTypeDef, Result);
 End;
 
-Procedure THsTypeDefs.MyPut(Index : Integer; Const Item : IHsTypeDef);
+Procedure THsTypeDefs.Put(Index : Integer; Const Item : IHsTypeDef);
 Var lInItem : IHsTypeDef;
 Begin
   Supports(Item, IHsTypeDef, lInItem);
@@ -2988,19 +2947,19 @@ Begin
   Result := InHerited Add(AItem);
 End;
 
-Function THsClassCodeGenerators.MyGet(Index : Integer) : IHsClassCodeGenerator;
+Function THsClassCodeGenerators.Get(Index : Integer) : IHsClassCodeGenerator;
 Begin
   Supports(InHerited Items[Index], IHsClassCodeGenerator, Result);
 End;
 
-Procedure THsClassCodeGenerators.MyPut(Index : Integer; Const Item : IHsClassCodeGenerator);
+Procedure THsClassCodeGenerators.Put(Index : Integer; Const Item : IHsClassCodeGenerator);
 Var lInItem : IHsClassCodeGenerator;
 Begin
   Supports(Item, IHsClassCodeGenerator, lInItem);
   InHerited Items[Index] := lInItem As IHsClassCodeGenerator;
 End;
 
-Function THsClassCodeGenerators.MyAdd() : IHsClassCodeGenerator;
+Function THsClassCodeGenerators.Add() : IHsClassCodeGenerator;
 Begin
   Result := THsClassCodeGenerator.Create();
   InHerited Add(Result);
