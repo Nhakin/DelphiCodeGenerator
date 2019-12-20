@@ -72,8 +72,17 @@ Type
 
   End;
 
+  IHsPropertyDefEnumerator = Interface(IInterfaceExEnumerator)
+    ['{4B61686E-29A0-2112-BC14-94E89A00B6B7}']
+    Function GetCurrent() : IHsPropertyDef;
+    Property Current : IHsPropertyDef Read GetCurrent;
+
+  End;
+    
   IHsPropertyDefs = Interface(IInterfaceListEx)
     ['{4B61686E-29A0-2112-8FE2-FD93D94484D3}']
+    Function  GetEnumerator() : IHsPropertyDefEnumerator;
+
     Function  Get(Index: Integer) : IHsPropertyDef;
     Procedure Put(Index: Integer; Const Item: IHsPropertyDef);
 

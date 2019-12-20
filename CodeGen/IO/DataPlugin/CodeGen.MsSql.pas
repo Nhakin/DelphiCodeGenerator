@@ -240,7 +240,6 @@ Type
     FDataState  : TDataState;
 
   Protected
-    Procedure Created(); OverRide;
     Procedure DisableTracking();
     Procedure EnableTracking();
 
@@ -277,6 +276,8 @@ Type
     Procedure Delete();
     Procedure Assign(ASource : TObject); ReIntroduce; Virtual;
 
+    Procedure AfterConstruction(); OverRide;
+    
   End;
 
   TMsSqlClassDefs = Class(THsClassCodeGenerators, IMsSqlClassDefs)
@@ -760,9 +761,9 @@ Begin
   InHerited Items[Index] := lInItem;
 End;
 
-Procedure TMsSqlClassDef.Created();
+Procedure TMsSqlClassDef.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
   
   FDataState := edsBrowse;
 End;

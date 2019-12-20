@@ -40,8 +40,17 @@ Type
 
   End;
 
+  IHsVTSettingNodeEnumerator = Interface(IInterfaceExEnumerator)
+    ['{4B61686E-29A0-2112-9DF2-A094AD5854C8}']
+    Function GetCurrent() : IHsVTSettingNode;
+    Property Current : IHsVTSettingNode Read GetCurrent;
+
+  End;
+
   IHsVTSettingNodes = Interface(IInterfaceListEx)
     ['{4B61686E-29A0-2112-9E1A-668F06C33FF8}']
+    Function  GetEnumerator() : IHsVTSettingNodeEnumerator;
+
     Function  Get(Index : Integer) : IHsVTSettingNode;
     Procedure Put(Index : Integer; Const Item : IHsVTSettingNode);
 
@@ -210,12 +219,12 @@ Type
 
   IHsVTClassCodeGeneratorsNode = Interface(IInterfaceListEx)
     ['{4B61686E-29A0-2112-9C2D-E37B8A199328}']
-    Function  MyGet(Index: Integer) : IHsVTClassCodeGeneratorNode;
-    Procedure MyPut(Index: Integer; Const Item: IHsVTClassCodeGeneratorNode);
+    Function  Get(Index: Integer) : IHsVTClassCodeGeneratorNode;
+    Procedure Put(Index: Integer; Const Item: IHsVTClassCodeGeneratorNode);
 
     Function Add() : IHsVTClassCodeGeneratorNode;
 
-    Property Items[Index : Integer] : IHsVTClassCodeGeneratorNode Read MyGet Write MyPut; Default;
+    Property Items[Index : Integer] : IHsVTClassCodeGeneratorNode Read Get Write Put; Default;
 
   End;
 
@@ -253,8 +262,6 @@ Type
     FOnChange : TOnValueChangeEvent;
 
   Protected
-    Procedure Created(); OverRide;
-
     Function  GetVTNode() : PVirtualNode;
     Procedure SetVTNode(AVTNode : PVirtualNode);
     Function  GetSettingName() : String;
@@ -282,21 +289,31 @@ Type
 
     Procedure GetEnumNameList(AList : TStrings);
 
+  Public
+    Procedure AfterConstruction(); OverRide;
+
   End;
 
   THsVTSettingNodes = Class(TInterfaceListEx, IHsVTSettingNodes)
+  Strict Private Type
+    THsVTSettingNodeEnumerator = Class(TInterfaceExEnumerator, IHsVTSettingNodeEnumerator)
+    Protected
+      Function GetCurrent() : IHsVTSettingNode; OverLoad;
+
+    End;
+      
   Strict Private
     FVTNode : PVirtualNode;
     FNodeCaption : String;
     FSettingVisible : Boolean;
 
   Protected
-    Procedure Created(); OverRide;
+    Function  GetEnumerator() : IHsVTSettingNodeEnumerator; OverLoad;
 
-    Function  MyGet(Index : Integer) : IHsVTSettingNode;
-    Procedure MyPut(Index : Integer; Const Item : IHsVTSettingNode);
-    Function  MyAdd() : IHsVTSettingNode;
-    Function  MyIndexOf(Const ANodeSettingName : String) : Integer;
+    Function  Get(Index : Integer) : IHsVTSettingNode; OverLoad;
+    Procedure Put(Index : Integer; Const Item : IHsVTSettingNode); OverLoad;
+    Function  Add() : IHsVTSettingNode; OverLoad;
+    Function  IndexOf(Const ANodeSettingName : String) : Integer; OverLoad;
 
     Function  GetVTNode() : PVirtualNode;
     Procedure SetVTNode(ANode : PVirtualNode);
@@ -313,12 +330,10 @@ Type
 
     Function  NodeSettingByName(Const ANodeSettingName : String) : IHsVTSettingNode;
 
-    Function  IHsVTSettingNodes.Get = MyGet;
-    Procedure IHsVTSettingNodes.Put = MyPut;
-    Function  IHsVTSettingNodes.Add = MyAdd;
-    Function  IHsVTSettingNodes.IndexOf = MyIndexOf;
+    Property Items[Index : Integer] : IHsVTSettingNode Read Get Write Put;
 
-    Property Items[Index : Integer] : IHsVTSettingNode Read MyGet Write MyPut;
+  Public
+    Procedure AfterConstruction(); OverRide;
 
   End;
 
@@ -330,8 +345,6 @@ Type
     Procedure DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
 
   Protected
-    Procedure Created(); OverRide;
-
     Function  GetList() : IHsVTPropertyDefsNode;
     Procedure SetList(AList : IHsVTPropertyDefsNode);
 
@@ -360,8 +373,10 @@ Type
     Property PropertyName : String Read GetPropertyName Write SetPropertyName;
 
   Public
+    Procedure AfterConstruction(); OverRide;
+    Procedure BeforeDestruction(); OverRide;
+
     Constructor Create(Const AList : IHsVTPropertyDefsNode); ReIntroduce;
-    Destructor Destroy(); OverRide;
 
   End;
 
@@ -377,13 +392,9 @@ Type
     Function  GetSettingVisible() : Boolean;
     Procedure SetSettingVisible(Const ASettingVisible : Boolean);
 
-    Function  MyGet(Index : Integer) : IHsVTPropertyDefNode;
-    Procedure MyPut(Index : Integer; Const Item : IHsVTPropertyDefNode);
-    Function  MyAdd() : IHsVTPropertyDefNode;
-
-    Function  IHsVTPropertyDefsNode.Get = MyGet;
-    Procedure IHsVTPropertyDefsNode.Put = MyPut;
-    Function  IHsVTPropertyDefsNode.Add = MyAdd;
+    Function  Get(Index : Integer) : IHsVTPropertyDefNode; OverLoad;
+    Procedure Put(Index : Integer; Const Item : IHsVTPropertyDefNode); OverLoad;
+    Function  Add() : IHsVTPropertyDefNode; OverLoad;
 
   End;
 
@@ -395,8 +406,6 @@ Type
     Procedure DoOnCodeChange(Sender : TObject);
 
   Protected
-    Procedure Created(); OverRide;
-
     Function  GetSettings() : IHsVTSettingNodes;
     Procedure SetSettings(Const ASettings : IHsVTSettingNodes);
 
@@ -413,7 +422,10 @@ Type
     Procedure SetShowInInterface(Const AShowInInterface : Boolean); OverRide;
 
     Procedure SetProcedureScope(Const AProcedureScope : THsFunctionScope); OverRide;
-    
+
+  Public
+    Procedure AfterConstruction(); OverRide;
+
   End;
 
   THsVTProcedureDefs = Class(THsProcedureDefs, IHsVTProcedureDefsNode)
@@ -503,11 +515,10 @@ Type
 
   THsVTClassCodeGeneratorsNode = Class(THsClassCodeGenerators, IHsVTClassCodeGeneratorsNode)
   Protected
-    Function  MyGet(Index: Integer) : IHsVTClassCodeGeneratorNode;
-    Procedure MyPut(Index: Integer; Const Item: IHsVTClassCodeGeneratorNode);
-    Function  MyAdd() : IHsVTClassCodeGeneratorNode;
+    Function  Get(Index: Integer) : IHsVTClassCodeGeneratorNode; OverLoad;
+    Procedure Put(Index: Integer; Const Item: IHsVTClassCodeGeneratorNode); OverLoad;
 
-    Function IHsVTClassCodeGeneratorsNode.Add = MyAdd;
+    Function  Add() : IHsVTClassCodeGeneratorNode; OverLoad;
 
   End;
 
@@ -520,8 +531,6 @@ Type
     Procedure DoSetSettingProperties(Sender : IHsVTSettingNode; Const AOldValue : Variant);
 
   Protected
-    Procedure Created(); OverRide;
-
     Function GetPropertiesClass() : THsPropertyDefsClass; OverRide;
 
     Function  GetVTNode() : PVirtualNode;
@@ -536,7 +545,10 @@ Type
     Procedure SetSettingsVisible(Const ASettingsVisible : Boolean);
 
     Procedure GetTypeDefList(Const AStrings : TStrings);
-    Function GetTypeDefMembers() : IHsVTPropertyDefsNode; OverLoad; 
+    Function GetTypeDefMembers() : IHsVTPropertyDefsNode; OverLoad;
+
+  Public
+    Procedure AfterConstruction(); OverRide;
 
   End;
 
@@ -579,9 +591,9 @@ End;
 
 (******************************************************************************)
 
-Procedure THsVTSettingNode.Created();
+Procedure THsVTSettingNode.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
   FSettingVisible := True;
 End;
 
@@ -692,28 +704,38 @@ Begin
   FEnumInfo := AEnumInfo;
 End;
 
-Procedure THsVTSettingNodes.Created();
+Function THsVTSettingNodes.THsVTSettingNodeEnumerator.GetCurrent() : IHsVTSettingNode;
 Begin
-  InHerited Created();
+  Result := InHerited Current As IHsVTSettingNode;
+End;
+
+Procedure THsVTSettingNodes.AfterConstruction();
+Begin
+  InHerited AfterConstruction();
   
   FVTNode := Nil;
   FNodeCaption := 'Settings';
   FSettingVisible := True;
 End;
 
-Function THsVTSettingNodes.MyGet(Index : Integer) : IHsVTSettingNode;
+Function THsVTSettingNodes.GetEnumerator() : IHsVTSettingNodeEnumerator;
+Begin
+  Result := THsVTSettingNodeEnumerator.Create(Self);
+End;
+
+Function THsVTSettingNodes.Get(Index : Integer) : IHsVTSettingNode;
 Begin
   Supports(InHerited Items[Index], IHsVTSettingNode, Result);
 End;
 
-Procedure THsVTSettingNodes.MyPut(Index : Integer; Const Item : IHsVTSettingNode);
+Procedure THsVTSettingNodes.Put(Index : Integer; Const Item : IHsVTSettingNode);
 Var lInItem : IHsVTSettingNode;
 Begin
   Supports(Item, IHsVTSettingNode, lInItem);
   InHerited Items[Index] := lInItem;
 End;
 
-Function THsVTSettingNodes.MyAdd() : IHsVTSettingNode;
+Function THsVTSettingNodes.Add() : IHsVTSettingNode;
 Begin
   Result := THsVTSettingNode.Create();
   InHerited Add(Result);
@@ -721,7 +743,7 @@ End;
 
 Function THsVTSettingNodes.AddStringSetting(Const ASettingName : String; Const ASettingValue : String = '') : IHsVTSettingNode;
 Begin
-  Result := MyAdd();
+  Result := Add();
 
   Result.SettingType  := ptString;
   Result.SettingName  := ASettingName;
@@ -730,7 +752,7 @@ End;
 
 Function THsVTSettingNodes.AddTStringSetting(Const ASettingName : String; Const ASettingValue : String = '') : IHsVTSettingNode;
 Begin
-  Result := MyAdd();
+  Result := Add();
 
   Result.SettingType  := ptStringList;
   Result.SettingName  := ASettingName;
@@ -739,7 +761,7 @@ End;
 
 Function THsVTSettingNodes.AddIntegerSetting(Const ASettingName : String; Const ASettingValue : Integer = 0) : IHsVTSettingNode;
 Begin
-  Result := MyAdd();
+  Result := Add();
 
   Result.SettingType  := ptInteger;
   Result.SettingName  := ASettingName;
@@ -748,7 +770,7 @@ End;
 
 Function THsVTSettingNodes.AddBooleanSetting(Const ASettingName : String; Const ASettingValue : Boolean = True) : IHsVTSettingNode;
 Begin
-  Result := MyAdd();
+  Result := Add();
 
   Result.SettingType  := ptBoolean;
   Result.SettingName  := ASettingName;
@@ -757,13 +779,13 @@ End;
 
 Function THsVTSettingNodes.AddEnumSetting(Const ASettingName : String; AEnumSetting : PTypeInfo) : IHsVTSettingNode;
 Begin
-  Result := MyAdd();
+  Result := Add();
   Result.SettingType := ptEnum;
   Result.SettingName := ASettingName;
   Result.EnumInfo    := AEnumSetting;
 End;
 
-Function THsVTSettingNodes.MyIndexOf(Const ANodeSettingName : String) : Integer;
+Function THsVTSettingNodes.IndexOf(Const ANodeSettingName : String) : Integer;
 Var X : Integer;
 Begin
   Result := -1;
@@ -825,14 +847,14 @@ Begin
 End;
 
 Function THsVTSettingNodes.NodeSettingByName(Const ANodeSettingName : String) : IHsVTSettingNode;
-Var X : Integer;
+Var lItem : IHsVTSettingNode;
 Begin
   Result := Nil;
 
-  For X := 0 To Count - 1 Do
-    If SameText(Items[X].SettingName, ANodeSettingName) Then
+  For lItem In IHsVTSettingNodes(Self) Do
+    If SameText(lItem.SettingName, ANodeSettingName) Then
     Begin
-      Result := Items[X];
+      Result := lItem;
       Break;
     End;
 
@@ -851,9 +873,9 @@ Begin
 //  FList := Pointer(AList);
 End;
 
-Procedure THsVTPropertyDefNode.Created();
+Procedure THsVTPropertyDefNode.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
 
   FSettings := THsVTSettingNodes.Create();
 
@@ -914,11 +936,11 @@ Begin
   End;
 End;
 
-Destructor THsVTPropertyDefNode.Destroy();
+Procedure THsVTPropertyDefNode.BeforeDestruction();
 Begin
   FSettings := Nil;
 
-  InHerited Destroy();
+  InHerited BeforeDestruction();
 End;
 
 Procedure THsVTPropertyDefNode.GetPropertyTypeList(Const AStrings : TStrings);
@@ -1082,26 +1104,26 @@ Begin
     FSettingVisible := ASettingVisible;
 End;
 
-Function THsVTPropertyDefsNode.MyGet(Index : Integer) : IHsVTPropertyDefNode;
+Function THsVTPropertyDefsNode.Get(Index : Integer) : IHsVTPropertyDefNode;
 Begin
   Result := InHerited Items[Index] As IHsVTPropertyDefNode;
 End;
 
-Procedure THsVTPropertyDefsNode.MyPut(Index : Integer; Const Item : IHsVTPropertyDefNode);
+Procedure THsVTPropertyDefsNode.Put(Index : Integer; Const Item : IHsVTPropertyDefNode);
 Begin
   InHerited Items[Index] := Item;
 End;
 
-Function THsVTPropertyDefsNode.MyAdd() : IHsVTPropertyDefNode;
+Function THsVTPropertyDefsNode.Add() : IHsVTPropertyDefNode;
 Begin
   Result := THsVTPropertyDefNode.Create(Self);
 
   InHerited Add(Result);
 End;
 
-Procedure THsVTProcedureDef.Created();
+Procedure THsVTProcedureDef.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
 
   FSettings := THsVTSettingNodes.Create();
 
@@ -1589,9 +1611,9 @@ Begin
   FMsSQLSettings := ASettings;
 End;
 
-Procedure THsVTTypeDefNode.Created();
+Procedure THsVTTypeDefNode.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
 
   FSettings := THsVTSettingNodes.Create();
 (*
@@ -1739,17 +1761,17 @@ Begin
   InHerited Add(Result);
 End;
 
-Function THsVTClassCodeGeneratorsNode.MyGet(Index: Integer) : IHsVTClassCodeGeneratorNode;
+Function THsVTClassCodeGeneratorsNode.Get(Index: Integer) : IHsVTClassCodeGeneratorNode;
 Begin
   Result := InHerited Items[Index] As IHsVTClassCodeGeneratorNode;
 End;
 
-Procedure THsVTClassCodeGeneratorsNode.MyPut(Index: Integer; Const Item: IHsVTClassCodeGeneratorNode);
+Procedure THsVTClassCodeGeneratorsNode.Put(Index: Integer; Const Item: IHsVTClassCodeGeneratorNode);
 Begin
   InHerited Items[Index] := Item;
 End;
 
-Function THsVTClassCodeGeneratorsNode.MyAdd() : IHsVTClassCodeGeneratorNode;
+Function THsVTClassCodeGeneratorsNode.Add() : IHsVTClassCodeGeneratorNode;
 Begin
   Result := THsVTClassCodeGeneratorNode.Create();
   InHerited Add(Result);

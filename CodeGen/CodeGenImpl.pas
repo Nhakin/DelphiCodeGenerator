@@ -40,8 +40,6 @@ Type
     Function GetPropertyTypeStr() : String;
 
   Protected
-    Procedure Created(); OverRide;
-
     //Methods
     Function GetVariableDefinition(Const AIsForRecord : Boolean = False) : String;
     Function GetPropertyDefinition(Const AHaveGetter, AHaveSetter : Boolean) : String;
@@ -82,21 +80,30 @@ Type
     Function  GetIsBigEndian() : Boolean; Virtual;
     Procedure SetIsBigEndian(Const ABigEndian : Boolean); Virtual;
 
+  Public
+    Procedure AfterConstruction(); OverRide;
+
   End;
 
   THsPropertyDefs = Class(TInterfaceListEx, IHsPropertyDefs)
+  Strict Private Type
+    THsPropertyDefEnumerator = Class(TInterfaceExEnumerator, IHsPropertyDefEnumerator)
+    Protected
+      Function GetCurrent() : IHsPropertyDef; OverLoad;
+
+    End;
+
   Protected
-    Function  MyGet(Index : Integer) : IHsPropertyDef;
-    Procedure MyPut(Index : Integer; Const Item : IHsPropertyDef);
+    Function  GetEnumerator() : IHsPropertyDefEnumerator; OverLoad;
+
+    Function  Get(Index : Integer) : IHsPropertyDef; OverLoad;
+    Procedure Put(Index : Integer; Const Item : IHsPropertyDef); OverLoad;
 
     Function  GetHaveConstructor() : Boolean;
     Function  GetHaveDestructor() : Boolean;
 
     Function Add(Const Item : IHsPropertyDef): Integer; OverLoad;
     Function Add() : IHsPropertyDef; ReIntroduce; OverLoad;
-
-    Function  IHsPropertyDefs.Get = MyGet;
-    Procedure IHsPropertyDefs.Put = MyPut;
 
   End;
 
@@ -123,8 +130,6 @@ Type
     Function GetResultTypeStr(Const AResultType : THsFunctionResultType) : String;
     
   Protected
-    Procedure Created(); OverRide;
-
     Function GetProcedureDefinition(Const AForClass : Boolean = False; Const AForInterface : Boolean = False) : String; Virtual;
 
     Function  GetProcedureType() : Byte; Virtual;
@@ -171,7 +176,8 @@ Type
     Procedure Clear();
 
   Public
-    Destructor Destroy(); OverRide;
+    Procedure AfterConstruction(); OverRide;
+    Procedure BeforeDestruction(); OverRide;
 
   End;
 
@@ -304,7 +310,7 @@ Type
   Protected
     Function  Get(Index : Integer) : IHsClassCodeGenerator; OverLoad;
     Procedure Put(Index : Integer; Const Item : IHsClassCodeGenerator); OverLoad;
-    Function  Add() : IHsClassCodeGenerator; OverLoad;
+    Function  Add() : IHsClassCodeGenerator; ReIntroduce; OverLoad;
 
     Procedure Delete(Const Item : IHsClassCodeGenerator); OverLoad;
 
@@ -372,8 +378,6 @@ Type
     Property XmlImpl  : IXMLUnitGenerator  Read GetXmlIO Implements IXMLUnitGenerator;
 
   Protected
-    Procedure Created(); OverRide;
-
     Procedure SaveToFile(Const AFileName : String); Virtual;
     Procedure LoadFromFile(Const AFileName : String); Virtual;
     Procedure Assign(Const ASource : IHsUnitGenerator); Virtual;
@@ -398,7 +402,8 @@ Type
   Public
     Function  GenerateUnitCode() : String;
 
-    Destructor Destroy(); OverRide;
+    Procedure AfterConstruction(); OverRide;
+    Procedure BeforeDestruction(); OverRide;
 
   End;
 
@@ -550,9 +555,9 @@ End;
   
 (******************************************************************************)
 
-Procedure THsPropertyDef.Created();
+Procedure THsPropertyDef.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
 
   FIsReadOnly  := False;
   FIsDataAware := False;
@@ -975,13 +980,23 @@ End;
 
 (******************************************************************************)
 
+Function THsPropertyDefs.THsPropertyDefEnumerator.GetCurrent() : IHsPropertyDef;
+Begin
+  Result := InHerited Current As IHsPropertyDef;
+End;
+
+Function THsPropertyDefs.GetEnumerator() : IHsPropertyDefEnumerator;
+Begin
+  Result := THsPropertyDefEnumerator.Create(Self);
+End;
+
 Function THsPropertyDefs.GetHaveConstructor() : Boolean;
-Var X : Integer;
+Var lItem : IHsPropertyDef;
 Begin
   Result := False;
 
-  For X := 0 To Count - 1 Do
-    If MyGet(X).PropertyType In [ptObject, ptInterface, ptStringList] Then
+  For lItem In IHsPropertyDefs(Self) Do
+    If lItem.PropertyType In [ptObject, ptInterface, ptStringList] Then
     Begin
       Result := True;
       Break;
@@ -989,24 +1004,24 @@ Begin
 End;
 
 Function THsPropertyDefs.GetHaveDestructor() : Boolean;
-Var X : Integer;
+Var lItem : IHsPropertyDef;
 Begin
   Result := False;
 
-  For X := 0 To Count - 1 Do
-    If MyGet(X).PropertyType In [ptObject, ptInterface, ptStringList] Then
+  For lItem In IHsPropertyDefs(Self) Do
+    If lItem.PropertyType In [ptObject, ptInterface, ptStringList] Then
     Begin
       Result := True;
       Break;
     End;
 End;
 
-Function THsPropertyDefs.MyGet(Index : Integer) : IHsPropertyDef;
+Function THsPropertyDefs.Get(Index : Integer) : IHsPropertyDef;
 Begin
   Result := InHerited Items[Index] As IHsPropertyDef;
 End;
 
-Procedure THsPropertyDefs.MyPut(Index : Integer; Const Item : IHsPropertyDef);
+Procedure THsPropertyDefs.Put(Index : Integer; Const Item : IHsPropertyDef);
 Begin
   InHerited Items[Index] := Item;
 End;
@@ -1254,6 +1269,7 @@ Var lGuidRec : Packed Record
     End;
     X : Integer;
     lTmpList : TStringList;
+    lLstHaveProc : Boolean;
 Begin
   If FInHeritsFrom <> '' Then
     AList.Add('  I' + FClsName + ' = Interface(I' + Copy(FInHeritsFrom, 2, Length(FInHeritsFrom)) + ')')
@@ -1352,6 +1368,17 @@ Begin
       AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
       AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
       AList.Add('');
+
+      lLstHaveProc := False;
+      For X := 0 To FListSettings.Methods.Count - 1 Do
+        If FListSettings.Methods[X].ShowInInterface Then
+        Begin
+          AList.Add('    ' + FListSettings.Methods[X].GetProcedureDefinition(True, True));
+          lLstHaveProc := True;
+        End;
+
+      If lLstHaveProc Then
+        AList.Add('');      
       AList.Add('    Property Items[Index : Integer] : I' + FClsName + ' Read Get Write Put; Default;');
     End;
     AList.Add('');
@@ -1426,7 +1453,11 @@ Begin
   (**)
       If FListSettings.UseEnumerator Then
       Begin
-        AList.Add('    T' + FClsName + 'Enumerator = Class(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)');
+        If FListSettings.IsSealed Then
+          AList.Add('    T' + FClsName + 'Enumerator = Class Sealed(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)')
+        Else
+          AList.Add('    T' + FClsName + 'Enumerator = Class(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)');
+
         AList.Add('    Protected');
         AList.Add('      Function GetCurrent() : I' + FClsName + '; OverLoad;');
         AList.Add('');
@@ -1434,7 +1465,11 @@ Begin
         AList.Add('');
       End;
 
-      AList.Add('    T' + FClsName + 'Item = Class(TInterfacedObjectEx, I' + FClsName + ')');
+      If FListSettings.IsSealed Then
+        AList.Add('    T' + FClsName + 'Item = Class Sealed(TInterfacedObjectEx, I' + FClsName + ')')
+      Else
+        AList.Add('    T' + FClsName + 'Item = Class(TInterfacedObjectEx, I' + FClsName + ')');
+
       If FUseStrict Then
         AList.Add('    Strict Private')
       Else
@@ -1458,11 +1493,28 @@ Begin
         AList.Add('');
       End;
 
+      If lPrivFunc.Count > 0 Then
+      Begin
+        If FUseStrict Then
+          AList.Add('    Strict Private')
+        Else
+          AList.Add('    Private');
+
+        For X := 0 To lPrivFunc.Count - 1 Do
+          AList.Add('      ' + lPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
       AList.Add('    Protected');
   //-->
       For X := 0 To FPropertyDefs.Count - 1 Do
         AList.Add(FPropertyDefs.Items[X].GetPropertyFunctions(True, True, False, False, 3));
 
+      For X := 0 To lProtFunc.Count - 1 Do
+        AList.Add('      ' + lProtFunc[X].GetProcedureDefinition(True));
+      If lProtFunc.Count > 0 Then
+        AList.Add('');
+        
       If FTrackChange Then
       Begin
         AList.Add('      Procedure Changed();');
@@ -1479,13 +1531,19 @@ Begin
         AList.Add('    Public');
       End;
 
+      For X := 0 To lPublFunc.Count - 1 Do
+        AList.Add('      ' + lPublFunc[X].GetProcedureDefinition(True));
+      If lPublFunc.Count > 0 Then
+        AList.Add('');
+
       If FPropertyDefs.HaveConstructor Then
         AList.Add('      Procedure AfterConstruction(); OverRide;');
 
       If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
         AList.Add('      Procedure BeforeDestruction(); OverRide;');
 
-      AList.Add('');
+      If FPropertyDefs.HaveConstructor Or FPropertyDefs.HaveDestructor Then
+        AList.Add('');
 
       AList.Add('    End;');
       AList.Add('');
@@ -1501,6 +1559,12 @@ Begin
       AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
       AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
       AList.Add('');
+
+      For X := 0 To FListSettings.Methods.Count - 1 Do
+        AList.Add('    ' + FListSettings.Methods[X].GetProcedureDefinition(True));
+      If FListSettings.Methods.Count > 0 Then
+        AList.Add('');
+
       AList.Add('  End;');
 
       Finally
@@ -2237,6 +2301,12 @@ Begin
           AList.Add('  Result := InHerited Add(AItem);');
           AList.Add('End;');
           AList.Add('');
+          For X := 0 To FListSettings.Methods.Count - 1 Do
+          Begin
+            AList.Add(StringReplace(FProcedureDefs[X].GetProcedureDefinition(False), '%ClassName%', lClsName, [rfReplaceAll, rfIgnoreCase]));
+            AList.Add(FProcedureDefs[X].ProcedureImpl.Text);
+            AList.Add('');
+          End;
         End
         Else
         Begin
@@ -2661,18 +2731,18 @@ Begin
   InHerited Items[Index] := lInItem;
 End;
 
-Procedure THsProcedureDef.Created();
+Procedure THsProcedureDef.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
 
   FProcedureImpl := TStringList.Create();
 End;
 
-Destructor THsProcedureDef.Destroy();
+Procedure THsProcedureDef.BeforeDestruction();
 Begin
   FreeAndNil(FProcedureImpl);
 
-  InHerited Destroy();
+  InHerited BeforeDestruction();
 End;
 
 Procedure THsProcedureDef.Clear();
@@ -2970,16 +3040,16 @@ Begin
   InHerited Delete(IndexOf(Item));
 End;
 
-Procedure THsUnitGenerator.Created();
+Procedure THsUnitGenerator.AfterConstruction();
 Begin
-  InHerited Created();
+  InHerited AfterConstruction();
 
   FClassDefs := GetCodeGeneratorClass().Create();
   FTypeDefs  := GetTypeDefsClass().Create(); 
   FUnitName := 'NewUnit';
 End;
 
-Destructor THsUnitGenerator.Destroy();
+Procedure THsUnitGenerator.BeforeDestruction();
 Begin
   Include(FStates, isDestroying);
   FClassDefs := Nil;
@@ -2987,7 +3057,7 @@ Begin
   FJSon := Nil;
   FXml  := Nil;
 
-  InHerited Destroy();
+  InHerited BeforeDestruction();
 End;
 
 Function THsUnitGenerator.GetStates() : TInterfaceStates;
