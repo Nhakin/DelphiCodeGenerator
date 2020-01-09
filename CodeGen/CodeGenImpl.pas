@@ -1421,17 +1421,21 @@ Begin
 End;
 
 Procedure THsClassCodeGenerator.GenerateClassDef(AList : TStringList);
-Var lTmpList : TStringList;
-    X        : Integer;
-    lPrivFunc ,
-    lProtFunc ,
-    lPublFunc : IHsProcedureDefs;
+Var lTmpList   : TStringList;
+    X          : Integer;
+    lPrivFunc  ,
+    lProtFunc  ,
+    lPublFunc  ,
+    lSPrivFunc ,
+    lSProtFunc : IHsProcedureDefs;
 Begin
 //FProcedureDefs.Count - 1
 
-  lPrivFunc := THsProcedureDefs.Create();
-  lProtFunc := THsProcedureDefs.Create();
-  lPublFunc := THsProcedureDefs.Create();
+  lPrivFunc  := THsProcedureDefs.Create();
+  lProtFunc  := THsProcedureDefs.Create();
+  lPublFunc  := THsProcedureDefs.Create();
+  lSPrivFunc := THsProcedureDefs.Create();
+  lSProtFunc := THsProcedureDefs.Create();
 
   For X := 0 To FProcedureDefs.Count - 1 Do
     If FProcedureDefs[X].ProcedureScope = fsPrivate Then
@@ -1439,7 +1443,11 @@ Begin
     Else If FProcedureDefs[X].ProcedureScope = fsProtected Then
       lProtFunc.Add(FProcedureDefs[X])
     Else If FProcedureDefs[X].ProcedureScope = fsPublic Then
-      lPublFunc.Add(FProcedureDefs[X]);
+      lPublFunc.Add(FProcedureDefs[X])
+    Else If FProcedureDefs[X].ProcedureScope = fsStrictPrivate Then
+      lSPrivFunc.Add(FProcedureDefs[X])
+    Else If FProcedureDefs[X].ProcedureScope = fsStrictProtected Then
+      lSProtFunc.Add(FProcedureDefs[X]);
 
   If FMakeList And FListSettings.UseNestedClass And (FDataType = dsNone) Then
   Begin
@@ -1493,15 +1501,31 @@ Begin
         AList.Add('');
       End;
 
+      If lSPrivFunc.Count > 0 Then
+      Begin
+        If Not FUseStrict Then
+          AList.Add('    Strict Private');
+
+        For X := 0 To lSPrivFunc.Count - 1 Do
+          AList.Add('      ' + lSPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
       If lPrivFunc.Count > 0 Then
       Begin
-        If FUseStrict Then
-          AList.Add('    Strict Private')
-        Else
-          AList.Add('    Private');
+        AList.Add('    Private');
 
         For X := 0 To lPrivFunc.Count - 1 Do
           AList.Add('      ' + lPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If lSProtFunc.Count > 0 Then
+      Begin
+        AList.Add('    Strict Protected');
+
+        For X := 0 To lSPrivFunc.Count - 1 Do
+          AList.Add('      ' + lSPrivFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 

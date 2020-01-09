@@ -34,7 +34,8 @@ Type
                     );
   THsFunctionFlags = Set Of THsFunctionFlag;
   THsFunctionScope = (
-                       fsPrivate, fsProtected, fsPublic
+                       fsPrivate, fsProtected, fsPublic,
+                       fsStrictPrivate, fsStrictProtected
                      );
                     
 implementation
