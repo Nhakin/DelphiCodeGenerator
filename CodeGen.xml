@@ -9,8 +9,6 @@
         <UseInterface>true</UseInterface>
         <UseStrict>true</UseStrict>
         <MakeList>true</MakeList>
-        <UseEnumerator>true</UseEnumerator>
-        <UseNestedClass>false</UseNestedClass>
         <TrackChange>false</TrackChange>
         <DataType>dsNone</DataType>
       </Settings>
@@ -83,6 +81,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -119,6 +118,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -166,6 +166,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -359,61 +360,17 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
       </Procedures>
-    </ClassDef>
-    <ClassDef Name="HsTypeDef">
-      <Settings>
-        <InHeritsFrom/>
-        <UseCustomClass>false</UseCustomClass>
-        <UseInterface>true</UseInterface>
-        <UseStrict>true</UseStrict>
-        <MakeList>true</MakeList>
+      <ListSettings>
+        <UseStrict>false</UseStrict>
         <UseEnumerator>true</UseEnumerator>
         <UseNestedClass>false</UseNestedClass>
-        <TrackChange>false</TrackChange>
-        <DataType>dsNone</DataType>
-      </Settings>
-      <Properies>
-        <Property Name="TypeDefType" PropertyType="ptByte">
-          <IsReadOnly>false</IsReadOnly>
-          <IsDataAware>false</IsDataAware>
-        </Property>
-        <Property Name="TypeDefName" PropertyType="ptString">
-          <IsReadOnly>false</IsReadOnly>
-          <IsDataAware>false</IsDataAware>
-          <MaxLen>0</MaxLen>
-        </Property>
-        <Property Name="TypeDefValue" PropertyType="ptStringList">
-          <IsReadOnly>false</IsReadOnly>
-          <IsDataAware>false</IsDataAware>
-        </Property>
-        <Property Name="TypeDefMembers" PropertyType="ptInterface">
-          <IsReadOnly>true</IsReadOnly>
-          <InterfaceName>IHsPropertyDefs</InterfaceName>
-          <InterfaceImplementor>THsPropertyDefs</InterfaceImplementor>
-          <IsDataAware>false</IsDataAware>
-        </Property>
-      </Properies>
-      <Procedures>
-        <Procedure>
-          <Parameters/>
-          <ProcedureName>GetTypeDefDefinition</ProcedureName>
-          <ProcedureImpl>Begin
-
-End;
-</ProcedureImpl>
-          <ResultType>rtString</ResultType>
-          <Scope>fsProtected</Scope>
-          <IsVirtual>false</IsVirtual>
-          <IsAbstract>false</IsAbstract>
-          <IsOverRide>false</IsOverRide>
-          <IsReIntroduce>false</IsReIntroduce>
-          <IsOverLoad>false</IsOverLoad>
-          <ShowInInterface>true</ShowInInterface>
-        </Procedure>
-      </Procedures>
+        <IsSealed>false</IsSealed>
+        <Methods/>
+      </ListSettings>
     </ClassDef>
     <ClassDef Name="HsProcedureDef">
       <Settings>
@@ -422,8 +379,6 @@ End;
         <UseInterface>true</UseInterface>
         <UseStrict>true</UseStrict>
         <MakeList>true</MakeList>
-        <UseEnumerator>true</UseEnumerator>
-        <UseNestedClass>false</UseNestedClass>
         <TrackChange>false</TrackChange>
         <DataType>dsNone</DataType>
       </Settings>
@@ -468,6 +423,22 @@ End;
           <IsDataAware>false</IsDataAware>
         </Property>
         <Property Name="IsOverLoad" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="IsFinal" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="IsStatic" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="IsInline" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="ShowInInterface" PropertyType="ptBoolean">
           <IsReadOnly>false</IsReadOnly>
           <IsDataAware>false</IsDataAware>
         </Property>
@@ -523,9 +494,52 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
       </Procedures>
+      <ListSettings>
+        <UseStrict>false</UseStrict>
+        <UseEnumerator>true</UseEnumerator>
+        <UseNestedClass>false</UseNestedClass>
+        <IsSealed>false</IsSealed>
+        <Methods/>
+      </ListSettings>
+    </ClassDef>
+    <ClassDef Name="HsListSettings">
+      <Settings>
+        <InHeritsFrom/>
+        <UseCustomClass>false</UseCustomClass>
+        <UseInterface>true</UseInterface>
+        <UseStrict>false</UseStrict>
+        <MakeList>false</MakeList>
+        <TrackChange>false</TrackChange>
+        <DataType>dsNone</DataType>
+      </Settings>
+      <Properies>
+        <Property Name="UseStrict" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="UseEnumerator" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="UseNestedClass" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="IsSealed" PropertyType="ptBoolean">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="Methods" PropertyType="ptInterface">
+          <IsReadOnly>true</IsReadOnly>
+          <InterfaceName>IHsProcedureDefs</InterfaceName>
+          <InterfaceImplementor>THsProcedureDefs</InterfaceImplementor>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+      </Properies>
     </ClassDef>
     <ClassDef Name="HsClassCodeGenerator">
       <Settings>
@@ -534,8 +548,6 @@ End;
         <UseInterface>true</UseInterface>
         <UseStrict>true</UseStrict>
         <MakeList>true</MakeList>
-        <UseEnumerator>true</UseEnumerator>
-        <UseNestedClass>false</UseNestedClass>
         <TrackChange>false</TrackChange>
         <DataType>dsNone</DataType>
       </Settings>
@@ -566,12 +578,10 @@ End;
           <IsReadOnly>false</IsReadOnly>
           <IsDataAware>false</IsDataAware>
         </Property>
-        <Property Name="UseEnumerator" PropertyType="ptBoolean">
+        <Property Name="ListSettings" PropertyType="ptInterface">
           <IsReadOnly>false</IsReadOnly>
-          <IsDataAware>false</IsDataAware>
-        </Property>
-        <Property Name="UseNestedClass" PropertyType="ptBoolean">
-          <IsReadOnly>false</IsReadOnly>
+          <InterfaceName>IHsListSettings</InterfaceName>
+          <InterfaceImplementor>THsListSettings</InterfaceImplementor>
           <IsDataAware>false</IsDataAware>
         </Property>
         <Property Name="TrackChange" PropertyType="ptBoolean">
@@ -728,6 +738,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1104,6 +1115,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1619,6 +1631,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1663,6 +1676,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1809,6 +1823,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1888,9 +1903,75 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>false</ShowInInterface>
         </Procedure>
       </Procedures>
+      <ListSettings>
+        <UseStrict>false</UseStrict>
+        <UseEnumerator>false</UseEnumerator>
+        <UseNestedClass>false</UseNestedClass>
+        <IsSealed>false</IsSealed>
+        <Methods/>
+      </ListSettings>
+    </ClassDef>
+    <ClassDef Name="HsTypeDef">
+      <Settings>
+        <InHeritsFrom/>
+        <UseCustomClass>false</UseCustomClass>
+        <UseInterface>true</UseInterface>
+        <UseStrict>true</UseStrict>
+        <MakeList>true</MakeList>
+        <TrackChange>false</TrackChange>
+        <DataType>dsNone</DataType>
+      </Settings>
+      <Properies>
+        <Property Name="TypeDefType" PropertyType="ptByte">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="TypeDefName" PropertyType="ptString">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+          <MaxLen>0</MaxLen>
+        </Property>
+        <Property Name="TypeDefValue" PropertyType="ptStringList">
+          <IsReadOnly>false</IsReadOnly>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+        <Property Name="TypeDefMembers" PropertyType="ptInterface">
+          <IsReadOnly>true</IsReadOnly>
+          <InterfaceName>IHsPropertyDefs</InterfaceName>
+          <InterfaceImplementor>THsPropertyDefs</InterfaceImplementor>
+          <IsDataAware>false</IsDataAware>
+        </Property>
+      </Properies>
+      <Procedures>
+        <Procedure>
+          <Parameters/>
+          <ProcedureName>GetTypeDefDefinition</ProcedureName>
+          <ProcedureImpl>Begin
+
+End;
+</ProcedureImpl>
+          <ResultType>rtString</ResultType>
+          <Scope>fsProtected</Scope>
+          <IsVirtual>false</IsVirtual>
+          <IsAbstract>false</IsAbstract>
+          <IsOverRide>false</IsOverRide>
+          <IsReIntroduce>false</IsReIntroduce>
+          <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
+          <ShowInInterface>true</ShowInInterface>
+        </Procedure>
+      </Procedures>
+      <ListSettings>
+        <UseStrict>false</UseStrict>
+        <UseEnumerator>true</UseEnumerator>
+        <UseNestedClass>false</UseNestedClass>
+        <IsSealed>false</IsSealed>
+        <Methods/>
+      </ListSettings>
     </ClassDef>
     <ClassDef Name="HsUnitGenerator">
       <Settings>
@@ -1899,8 +1980,6 @@ End;
         <UseInterface>true</UseInterface>
         <UseStrict>true</UseStrict>
         <MakeList>false</MakeList>
-        <UseEnumerator>false</UseEnumerator>
-        <UseNestedClass>false</UseNestedClass>
         <TrackChange>false</TrackChange>
         <DataType>dsNone</DataType>
       </Settings>
@@ -1938,6 +2017,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1954,6 +2034,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1970,6 +2051,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
         <Procedure>
@@ -1986,6 +2068,7 @@ End;
           <IsOverRide>false</IsOverRide>
           <IsReIntroduce>false</IsReIntroduce>
           <IsOverLoad>false</IsOverLoad>
+          <IsFinal>false</IsFinal>
           <ShowInInterface>true</ShowInInterface>
         </Procedure>
       </Procedures>

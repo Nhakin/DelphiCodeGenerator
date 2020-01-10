@@ -18,45 +18,45 @@ SET ANSI_PADDING ON
 GO
 
 CREATE TABLE [dbo].[Soldiers](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[SoldierName] [varchar](50) NULL,
-	[SoldierGrade] [int] NULL,
- CONSTRAINT [PK_Soldiers] PRIMARY KEY CLUSTERED 
+  [Id] [int] IDENTITY(1,1) NOT NULL,
+  [SoldierName] [varchar](50) NULL,
+  [SoldierGrade] [int] NULL,
+  CONSTRAINT [PK_Soldiers] PRIMARY KEY CLUSTERED 
 (
-	[Id] ASC
+  [Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
 
 CREATE TABLE [dbo].[SoldierWeapons](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[SoldierId] [int] NULL,
-	[WeaponId] [int] NULL,
-	[Position] [int] NULL,
+  [Id] [int] IDENTITY(1,1) NOT NULL,
+  [SoldierId] [int] NULL,
+  [WeaponId] [int] NULL,
+  [Position] [int] NULL,
  CONSTRAINT [PK_SoldierWeapons] PRIMARY KEY CLUSTERED 
 (
-	[Id] ASC
+  [Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
 
 CREATE TABLE [dbo].[WeaponCategories](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[CategoryName] [varchar](25) NULL,
+  [Id] [int] IDENTITY(1,1) NOT NULL,
+  [CategoryName] [varchar](25) NULL,
  CONSTRAINT [PK_WeaponCategories] PRIMARY KEY CLUSTERED 
 (
-	[Id] ASC
+  [Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
 
 CREATE TABLE [dbo].[Weapons](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[WeaponName] [varchar](50) NULL,
-	[WeaponCategoryId] [int] NULL,
+  [Id] [int] IDENTITY(1,1) NOT NULL,
+  [WeaponName] [varchar](50) NULL,
+  [WeaponCategoryId] [int] NULL,
  CONSTRAINT [PK_Weapons] PRIMARY KEY CLUSTERED 
 (
-	[Id] ASC
+  [Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO

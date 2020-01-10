@@ -22,8 +22,8 @@ Cross Apply (
   From sys.key_constraints sk
   Cross Apply (
     Select *
-	From sys.index_columns si
-	Where si.Object_Id = sk.Parent_Object_Id And si.Index_Id = sk.Unique_Index_Id
+    From sys.index_columns si
+    Where si.Object_Id = sk.Parent_Object_Id And si.Index_Id = sk.Unique_Index_Id
   ) si
   Where sk.Parent_Object_Id = st.Object_Id And si.Column_Id = sc.Column_Id
 )pk
