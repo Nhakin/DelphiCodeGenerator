@@ -1524,8 +1524,8 @@ Begin
       Begin
         AList.Add('    Strict Protected');
 
-        For X := 0 To lSPrivFunc.Count - 1 Do
-          AList.Add('      ' + lSPrivFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lSProtFunc.Count - 1 Do
+          AList.Add('      ' + lSProtFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
@@ -1572,10 +1572,55 @@ Begin
       AList.Add('    End;');
       AList.Add('');
   (**)
+      lPrivFunc.Clear();  
+      lProtFunc.Clear(); 
+      lPublFunc.Clear(); 
+      lSPrivFunc.Clear(); 
+      lSProtFunc.Clear();
+      
+      For X := 0 To FListSettings.Methods.Count - 1 Do
+        If FListSettings.Methods[X].ProcedureScope = fsPrivate Then
+          lPrivFunc.Add(FListSettings.Methods[X])
+        Else If FListSettings.Methods[X].ProcedureScope = fsProtected Then
+          lProtFunc.Add(FListSettings.Methods[X])
+        Else If FListSettings.Methods[X].ProcedureScope = fsPublic Then
+          lPublFunc.Add(FListSettings.Methods[X])
+        Else If FListSettings.Methods[X].ProcedureScope = fsStrictPrivate Then
+          lSPrivFunc.Add(FListSettings.Methods[X])
+        Else If FListSettings.Methods[X].ProcedureScope = fsStrictProtected Then
+          lSProtFunc.Add(FListSettings.Methods[X]);
+
+      If lSPrivFunc.Count > 0 Then
+      Begin
+        AList.Add('  Strict Private');
+        For X := 0 To lSPrivFunc.Count - 1 Do
+          AList.Add('    ' + lSPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If lPrivFunc.Count > 0 Then
+      Begin
+        AList.Add('  Private');
+        For X := 0 To lPrivFunc.Count - 1 Do
+          AList.Add('    ' + lPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If lSProtFunc.Count > 0 Then
+      Begin
+        AList.Add('  Strict Protected');
+        For X := 0 To lSProtFunc.Count - 1 Do
+          AList.Add('    ' + lSProtFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
       AList.Add('  Protected');
       AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
       If FListSettings.UseEnumerator Then
+      Begin
+        AList.Add('    Function GetEnumeratorClass() : TInterfaceExEnumeratorClass; OverRide;');
         AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
+      End;
       AList.Add('');
       AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
       AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + '); OverLoad;');
@@ -1583,11 +1628,20 @@ Begin
       AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
       AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
       AList.Add('');
-
-      For X := 0 To FListSettings.Methods.Count - 1 Do
-        AList.Add('    ' + FListSettings.Methods[X].GetProcedureDefinition(True));
-      If FListSettings.Methods.Count > 0 Then
+      If lProtFunc.Count > 0 Then
+      Begin
+        For X := 0 To lProtFunc.Count - 1 Do
+          AList.Add('    ' + lProtFunc[X].GetProcedureDefinition(True));
         AList.Add('');
+      End;
+
+      If lPublFunc.Count > 0 Then
+      Begin
+        AList.Add('  Public');
+        For X := 0 To lPublFunc.Count - 1 Do
+          AList.Add('    ' + lPublFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
 
       AList.Add('  End;');
 
@@ -2285,12 +2339,20 @@ Begin
             AList.Add('');
 
             If FListSettings.UseNestedClass Then
+              AList.Add('Function T' + FClsName + 'List.GetEnumeratorClass() : TInterfaceExEnumeratorClass;')
+            Else
+              AList.Add('Function T' + FClsName + 's.GetEnumeratorClass() : TInterfaceExEnumeratorClass;');
+            AList.Add('Begin');
+            AList.Add('  Result := T' + FClsName + 'Enumerator;');
+            AList.Add('End;');
+            AList.Add('');
+
+            If FListSettings.UseNestedClass Then
               AList.Add('Function T' + FClsName + 'List.GetEnumerator() : I' + FClsName + 'Enumerator;')
             Else
               AList.Add('Function T' + FClsName + 's.GetEnumerator() : I' + FClsName + 'Enumerator;');
-
             AList.Add('Begin');
-            AList.Add('  Result := T' + FClsName + 'Enumerator.Create(Self);');
+            AList.Add('  Result := InHerited GetEnumerator() As I' + FClsName + 'Enumerator;');
             AList.Add('End;');
             AList.Add('');
           End;
