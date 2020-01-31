@@ -116,6 +116,8 @@ Type
     CIsOverLoad      = 16;
     CShowInInterface = 32;
     CIsFinal         = 64;
+    CIsStatic        = 128;
+    CIsInLine        = 256;
 
   Strict Private
     FProcedureType       : Byte;
@@ -124,7 +126,7 @@ Type
     FProcedureParameters : String;
     FResultType          : THsFunctionResultType;
     FProcedureImpl       : TStrings;
-    FProcFlags           : Byte;
+    FProcFlags           : Word;
     FProcedureScope      : THsFunctionScope;
     
     Function GetResultTypeStr(Const AResultType : THsFunctionResultType) : String;
@@ -166,6 +168,12 @@ Type
 
     Function  GetIsFinal() : Boolean; Virtual;
     Procedure SetIsFinal(Const AIsFinal : Boolean); Virtual;
+
+    Function  GetIsStatic() : Boolean; Virtual;
+    Procedure SetIsStatic(Const AIsStatic : Boolean); Virtual;
+
+    Function  GetIsInline() : Boolean; Virtual;
+    Procedure SetIsInline(Const AIsInline : Boolean); Virtual;
 
     Function  GetShowInInterface() : Boolean; Virtual;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean); Virtual;
@@ -1421,33 +1429,41 @@ Begin
 End;
 
 Procedure THsClassCodeGenerator.GenerateClassDef(AList : TStringList);
-Var lTmpList   : TStringList;
-    X          : Integer;
+Var lTmpList    : TStringList;
+    X           : Integer;
+    lCPrivFunc  ,
+    lCProtFunc  ,
+    lCPublFunc  ,
+    lCSPrivFunc ,
+    lCSProtFunc : IHsProcedureDefs;
+
     lPrivFunc  ,
     lProtFunc  ,
     lPublFunc  ,
     lSPrivFunc ,
     lSProtFunc : IHsProcedureDefs;
+
+    lCurScope  : THsFunctionScope;
 Begin
 //FProcedureDefs.Count - 1
 
-  lPrivFunc  := THsProcedureDefs.Create();
-  lProtFunc  := THsProcedureDefs.Create();
-  lPublFunc  := THsProcedureDefs.Create();
-  lSPrivFunc := THsProcedureDefs.Create();
-  lSProtFunc := THsProcedureDefs.Create();
+  lCPrivFunc  := THsProcedureDefs.Create();
+  lCProtFunc  := THsProcedureDefs.Create();
+  lCPublFunc  := THsProcedureDefs.Create();
+  lCSPrivFunc := THsProcedureDefs.Create();
+  lCSProtFunc := THsProcedureDefs.Create();
 
   For X := 0 To FProcedureDefs.Count - 1 Do
     If FProcedureDefs[X].ProcedureScope = fsPrivate Then
-      lPrivFunc.Add(FProcedureDefs[X])
+      lCPrivFunc.Add(FProcedureDefs[X])
     Else If FProcedureDefs[X].ProcedureScope = fsProtected Then
-      lProtFunc.Add(FProcedureDefs[X])
+      lCProtFunc.Add(FProcedureDefs[X])
     Else If FProcedureDefs[X].ProcedureScope = fsPublic Then
-      lPublFunc.Add(FProcedureDefs[X])
+      lCPublFunc.Add(FProcedureDefs[X])
     Else If FProcedureDefs[X].ProcedureScope = fsStrictPrivate Then
-      lSPrivFunc.Add(FProcedureDefs[X])
+      lCSPrivFunc.Add(FProcedureDefs[X])
     Else If FProcedureDefs[X].ProcedureScope = fsStrictProtected Then
-      lSProtFunc.Add(FProcedureDefs[X]);
+      lCSProtFunc.Add(FProcedureDefs[X]);
 
   If FMakeList And FListSettings.UseNestedClass And (FDataType = dsNone) Then
   Begin
@@ -1497,35 +1513,34 @@ Begin
 
         For X := 0 To lTmpList.Count - 1 Do
           AList.Add(lTmpList[X]);
-
         AList.Add('');
       End;
 
-      If lSPrivFunc.Count > 0 Then
+      If lCSPrivFunc.Count > 0 Then
       Begin
         If Not FUseStrict Then
           AList.Add('    Strict Private');
 
-        For X := 0 To lSPrivFunc.Count - 1 Do
-          AList.Add('      ' + lSPrivFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCSPrivFunc.Count - 1 Do
+          AList.Add('      ' + lCSPrivFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
-      If lPrivFunc.Count > 0 Then
+      If lCPrivFunc.Count > 0 Then
       Begin
         AList.Add('    Private');
 
-        For X := 0 To lPrivFunc.Count - 1 Do
-          AList.Add('      ' + lPrivFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCPrivFunc.Count - 1 Do
+          AList.Add('      ' + lCPrivFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
-      If lSProtFunc.Count > 0 Then
+      If lCSProtFunc.Count > 0 Then
       Begin
         AList.Add('    Strict Protected');
 
-        For X := 0 To lSProtFunc.Count - 1 Do
-          AList.Add('      ' + lSProtFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCSProtFunc.Count - 1 Do
+          AList.Add('      ' + lCSProtFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
@@ -1534,9 +1549,9 @@ Begin
       For X := 0 To FPropertyDefs.Count - 1 Do
         AList.Add(FPropertyDefs.Items[X].GetPropertyFunctions(True, True, False, False, 3));
 
-      For X := 0 To lProtFunc.Count - 1 Do
-        AList.Add('      ' + lProtFunc[X].GetProcedureDefinition(True));
-      If lProtFunc.Count > 0 Then
+      For X := 0 To lCProtFunc.Count - 1 Do
+        AList.Add('      ' + lCProtFunc[X].GetProcedureDefinition(True));
+      If lCProtFunc.Count > 0 Then
         AList.Add('');
         
       If FTrackChange Then
@@ -1555,9 +1570,9 @@ Begin
         AList.Add('    Public');
       End;
 
-      For X := 0 To lPublFunc.Count - 1 Do
-        AList.Add('      ' + lPublFunc[X].GetProcedureDefinition(True));
-      If lPublFunc.Count > 0 Then
+      For X := 0 To lCPublFunc.Count - 1 Do
+        AList.Add('      ' + lCPublFunc[X].GetProcedureDefinition(True));
+      If lCPublFunc.Count > 0 Then
         AList.Add('');
 
       If FPropertyDefs.HaveConstructor Then
@@ -1572,45 +1587,45 @@ Begin
       AList.Add('    End;');
       AList.Add('');
   (**)
-      lPrivFunc.Clear();  
-      lProtFunc.Clear(); 
-      lPublFunc.Clear(); 
-      lSPrivFunc.Clear(); 
-      lSProtFunc.Clear();
+      lCPrivFunc.Clear();  
+      lCProtFunc.Clear(); 
+      lCPublFunc.Clear(); 
+      lCSPrivFunc.Clear(); 
+      lCSProtFunc.Clear();
       
       For X := 0 To FListSettings.Methods.Count - 1 Do
         If FListSettings.Methods[X].ProcedureScope = fsPrivate Then
-          lPrivFunc.Add(FListSettings.Methods[X])
+          lCPrivFunc.Add(FListSettings.Methods[X])
         Else If FListSettings.Methods[X].ProcedureScope = fsProtected Then
-          lProtFunc.Add(FListSettings.Methods[X])
+          lCProtFunc.Add(FListSettings.Methods[X])
         Else If FListSettings.Methods[X].ProcedureScope = fsPublic Then
-          lPublFunc.Add(FListSettings.Methods[X])
+          lCPublFunc.Add(FListSettings.Methods[X])
         Else If FListSettings.Methods[X].ProcedureScope = fsStrictPrivate Then
-          lSPrivFunc.Add(FListSettings.Methods[X])
+          lCSPrivFunc.Add(FListSettings.Methods[X])
         Else If FListSettings.Methods[X].ProcedureScope = fsStrictProtected Then
-          lSProtFunc.Add(FListSettings.Methods[X]);
+          lCSProtFunc.Add(FListSettings.Methods[X]);
 
-      If lSPrivFunc.Count > 0 Then
+      If lCSPrivFunc.Count > 0 Then
       Begin
         AList.Add('  Strict Private');
-        For X := 0 To lSPrivFunc.Count - 1 Do
-          AList.Add('    ' + lSPrivFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCSPrivFunc.Count - 1 Do
+          AList.Add('    ' + lCSPrivFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
-      If lPrivFunc.Count > 0 Then
+      If lCPrivFunc.Count > 0 Then
       Begin
         AList.Add('  Private');
-        For X := 0 To lPrivFunc.Count - 1 Do
-          AList.Add('    ' + lPrivFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCPrivFunc.Count - 1 Do
+          AList.Add('    ' + lCPrivFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
-      If lSProtFunc.Count > 0 Then
+      If lCSProtFunc.Count > 0 Then
       Begin
         AList.Add('  Strict Protected');
-        For X := 0 To lSProtFunc.Count - 1 Do
-          AList.Add('    ' + lSProtFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCSProtFunc.Count - 1 Do
+          AList.Add('    ' + lCSProtFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
@@ -1628,18 +1643,18 @@ Begin
       AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
       AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
       AList.Add('');
-      If lProtFunc.Count > 0 Then
+      If lCProtFunc.Count > 0 Then
       Begin
-        For X := 0 To lProtFunc.Count - 1 Do
-          AList.Add('    ' + lProtFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCProtFunc.Count - 1 Do
+          AList.Add('    ' + lCProtFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
-      If lPublFunc.Count > 0 Then
+      If lCPublFunc.Count > 0 Then
       Begin
         AList.Add('  Public');
-        For X := 0 To lPublFunc.Count - 1 Do
-          AList.Add('    ' + lPublFunc[X].GetProcedureDefinition(True));
+        For X := 0 To lCPublFunc.Count - 1 Do
+          AList.Add('    ' + lCPublFunc[X].GetProcedureDefinition(True));
         AList.Add('');
       End;
 
@@ -1651,6 +1666,279 @@ Begin
   End
   Else
   Begin
+    lTmpList := TStringList.Create();
+    Try
+      If FUseInterface Or (FDataType In [dsJSon, dsXML]) Then
+      Begin
+        If FInHeritsFrom <> '' Then
+        Begin
+          If FUseCustomClass Then
+            AList.Add('  TCustom' + FClsName + ' = Class(' + FInHeritsFrom + ', I' + FClsName + ')')
+          Else
+            AList.Add('  T' + FClsName + ' = Class(' + FInHeritsFrom + ', I' + FClsName + ')')
+        End
+        Else Case FDataType Of
+          dsJSon :
+          Begin
+            If FUseCustomClass Then
+              AList.Add('  TCustom' + FClsName + ' = Class(TSuperObjectEx, I' + FClsName + ')')
+            Else
+              AList.Add('  T' + FClsName + ' = Class(TSuperObjectEx, I' + FClsName + ')');
+          End;
+
+          dsXML :
+          Begin
+            AList.Add('  T' + FClsName + ' = Class(TXmlNodeEx, I' + FClsName + ')');
+          End;
+
+          Else
+            If FUseCustomClass Then
+              AList.Add('  TCustom' + FClsName + ' = Class(TInterfacedObjectEx, I' + FClsName + ')')
+            Else
+              AList.Add('  T' + FClsName + ' = Class(TInterfacedObjectEx, I' + FClsName + ')');
+        End;
+      End
+      Else
+      Begin
+        If FUseCustomClass Then
+          AList.Add('  TCustom' + FClsName + ' = Class(TPersistent)')
+        Else
+          AList.Add('  T' + FClsName + ' = Class(TPersistent)');
+      End;
+
+      lCurScope := fsPublic;
+
+      //Variables
+      If Not (FDataType In [dsJSon, dsXML]) Then
+      Begin
+        If (FPropertyDefs.Count > 0) Or FTrackChange Then
+        Begin
+          If FUseStrict Then
+          Begin
+            AList.Add('  Strict Private');
+            lCurScope := fsStrictPrivate;
+          End
+          Else
+          Begin
+            AList.Add('  Private');
+            lCurScope := fsPrivate;
+          End;
+
+          lTmpList.Clear();
+          For X := 0 To FPropertyDefs.Count - 1 Do
+            lTmpList.Add('    ' + FPropertyDefs.Items[X].GetVariableDefinition());
+        End;
+      End;
+
+      If FTrackChange Then
+        lTmpList.Add('    FDataState:TDataState;');
+
+      AlignVariables(lTmpList);
+      For X := 0 To lTmpList.Count - 1 Do
+        AList.Add(lTmpList[X]);
+
+      If (FPropertyDefs.Count > 0) Or FTrackChange Then
+        AList.Add('');
+
+      If lCSPrivFunc.Count > 0 Then
+      Begin
+        If lCurScope <> fsStrictPrivate Then
+        Begin
+          AList.Add('  Strict Private');
+          lCurScope := fsStrictPrivate;
+        End;
+
+        For X := 0 To lCSPrivFunc.Count - 1 Do
+          AList.Add(PadL('', 4) + lCSPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If lCPrivFunc.Count > 0 Then
+      Begin
+        If lCurScope <> fsPrivate Then
+        Begin
+          AList.Add('  Private');
+          lCurScope := fsPrivate;
+        End;
+
+        For X := 0 To lCPrivFunc.Count - 1 Do
+          AList.Add(PadL('', 4) + lCPrivFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If (lCurScope <> fsStrictProtected) And (lCSProtFunc.Count > 0) Then
+      Begin
+        AList.Add('  Strict Protected');
+        lCurScope := fsStrictProtected;
+
+        For X := 0 To lCSProtFunc.Count - 1 Do
+          AList.Add(PadL('', 4) + lCSProtFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If FUseInterface And (FPropertyDefs.Count > 0) And (lCurScope <> fsProtected) Then
+      Begin
+        AList.Add('  Protected');
+        lCurScope := fsProtected;
+      End;
+
+      For X := 0 To FPropertyDefs.Count - 1 Do
+      Begin
+        If Trim(FPropertyDefs.Items[X].GetPropertyFunctions(
+          FUseInterface Or (FDataType In [dsJSon, dsXML]),
+          FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML]),
+          True, False, 2)) <> '' Then
+          AList.Add(FPropertyDefs.Items[X].GetPropertyFunctions(
+            FUseInterface Or (FDataType In [dsJSon, dsXML]),
+            FUseInterface Or FTrackChange Or (FDataType In [dsJSon, dsXML]),
+            True, False, 2));
+      End;
+
+      If (lCurScope <> fsProtected) Then
+      Begin
+        AList.Add('  Protected');
+        lCurScope := fsProtected;
+      End;
+
+      If lCProtFunc.Count > 0 Then
+      Begin
+        For X := 0 To lCProtFunc.Count - 1 Do
+          AList.Add(PadL('', 4) + lCProtFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If FTrackChange Then
+      Begin
+        AList.Add('    Procedure Changed(); Virtual;');
+        AList.Add('    Function  GetModified() : Boolean;');
+      End;
+      AList.Add('    Procedure Clear();');
+      AList.Add('');
+
+      If lCurScope <> fsPublic Then
+      Begin
+        AList.Add('  Public');
+        lCurScope := fsPublic;
+      End;
+
+      If lCPublFunc.Count > 0 Then
+      Begin
+        For X := 0 To lCPublFunc.Count - 1 Do
+          AList.Add(PadL('', 4) + lCPublFunc[X].GetProcedureDefinition(True));
+        AList.Add('');
+      End;
+
+      If FDataType = dsMSSql Then
+      Begin
+        AList.Add('    Procedure New();');
+        AList.Add(GetLoadParamType('    Procedure Load(AId : %DataType%);'));
+        AList.Add('    Procedure Save();');
+        AList.Add('    Procedure Delete();');
+        AList.Add('    Procedure CreateTable();');
+      End;
+
+      AList.Add('    Procedure Assign(ASource : TObject); ReIntroduce; Virtual;');
+      AList.Add('');
+
+      If FPropertyDefs.HaveConstructor Then
+      Begin
+        If FDataType In [dsJSon, dsXML] Then
+          AList.Add('    Procedure AfterConstruction(); OverRide;')
+        Else
+          AList.Add('    Constructor Create(); ReIntroduce; Virtual;');
+
+        If Not FPropertyDefs.HaveDestructor Then
+          AList.Add('');
+      End;
+
+      If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
+      Begin
+        AList.Add('    Destructor Destroy(); OverRide;');
+        AList.Add('');
+      End;
+      AList.Add('  End;');
+
+      {$Region ' Lists '}
+      If FMakeList Then
+      Begin
+        If FListSettings.UseEnumerator And (FDataType = dsNone) Then
+        Begin
+          AList.Add('');
+          AList.Add('  T' + FClsName + 'Enumerator = Class(TInterfaceExEnumerator, I' + FClsName + 'Enumerator)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetCurrent() : I' + FClsName + '; OverLoad;');
+          AList.Add('');
+          AList.Add('  End;');
+        End;
+
+        AList.Add('');
+
+        If FDataType = dsJSon Then
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TSuperObjectExList, I' + FClsName + 's)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetItemClass() : TSuperObjectExClass; OverRide;');
+          AList.Add('    Function GetItem(Const Index : Integer) : I' + FClsName + '; OverLoad;');
+          AList.Add('');
+          AList.Add('  Public');
+          AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
+          AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
+          AList.Add('');
+          AList.Add('    Property Items[Const Index: Integer] : I' + FClsName + ' Read MyGetItem; Default;');
+          AList.Add('');
+          AList.Add('  End;');
+        End
+        Else If FDataType = dsXML Then
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TXMLNodeCollectionEx, I' + FClsName + 's)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetItem(Const Index : Integer) : I' + FClsName + ';');
+          AList.Add('');
+          AList.Add('    Function Add() : I' + FClsName + ';');
+          AList.Add('    Function Insert(Const Index : Integer) : I' + FClsName + ';');
+          AList.Add('');
+          AList.Add('  Public');
+          AList.Add('    Procedure AfterConstruction(); OverRide;');
+          AList.Add('');
+          AList.Add('  End;');
+        End
+        Else If FUseInterface Then
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TInterfaceListEx, I' + FClsName + 's)');
+          AList.Add('  Protected');
+          AList.Add('    Function GetItemClass() : TInterfacedObjectExClass; OverRide;');
+          If FListSettings.UseEnumerator Then
+            AList.Add('    Function GetEnumerator() : I' + FClsName + 'Enumerator; OverLoad;');
+          AList.Add('');
+          AList.Add('    Function  Get(Index : Integer) : I' + FClsName + '; OverLoad;');
+          AList.Add('    Procedure Put(Index : Integer; Const Item : I' + FClsName + '); OverLoad;');
+          AList.Add('');
+          AList.Add('    Function Add() : I' + FClsName + '; OverLoad;');
+          AList.Add('    Function Add(Const AItem : I' + FClsName + ') : Integer; OverLoad;');
+          AList.Add('');
+          AList.Add('  End;');
+        End
+        Else
+        Begin
+          AList.Add('  T' + FClsName + 's = Class(TObjectList)');
+          AList.Add('  Protected');
+          AList.Add('    Function  GetItem(Index : Integer) : T' + FClsName + ';');
+          AList.Add('    Procedure SetItem(Index : Integer; Const Item: T' + FClsName + ');');
+          AList.Add('');
+          AList.Add('  Public');
+          AList.Add('    Property Items[Index : Integer] : T' + FClsName + ' Read GetItem Write SetItem; Default;');
+          AList.Add('');
+          AList.Add('  End;');
+        End;
+      End;
+      {$EndRegion}
+
+      Finally
+        lTmpList.Free();
+    End;
+
+{$Region ' Old Code '}
+(*
     lTmpList := TStringList.Create();
     Try
       If FUseInterface Or (FDataType In [dsJSon, dsXML]) Then
@@ -1894,6 +2182,8 @@ Begin
         lProtFunc := Nil;
         lPublFunc := Nil;
     End;
+*)
+{$EndRegion ' Old Code '}
   End;
 End;
 
@@ -2980,6 +3270,32 @@ Begin
     FProcFlags := FProcFlags Xor CIsFinal;
 End;
 
+Function THsProcedureDef.GetIsStatic() : Boolean;
+Begin
+  Result := FProcFlags And CIsStatic = CIsStatic;
+End;
+
+Procedure THsProcedureDef.SetIsStatic(Const AIsStatic : Boolean);
+Begin
+  If AIsStatic Then
+    FProcFlags := FProcFlags Or CIsStatic
+  Else If FProcFlags And CIsStatic = CIsStatic Then
+    FProcFlags := FProcFlags Xor CIsStatic;
+End;
+
+Function THsProcedureDef.GetIsInline() : Boolean;
+Begin
+  Result := FProcFlags And CIsInLine = CIsInLine;
+End;
+
+Procedure THsProcedureDef.SetIsInline(Const AIsInline : Boolean);
+Begin
+  If AIsInline Then
+    FProcFlags := FProcFlags Or CIsInLine
+  Else If FProcFlags And CIsInLine = CIsInLine Then
+    FProcFlags := FProcFlags Xor CIsInLine;
+End;
+
 Function THsProcedureDef.GetShowInInterface() : Boolean;
 Begin
   Result := FProcFlags And CShowInInterface = CShowInInterface;
@@ -3070,6 +3386,12 @@ Begin
 
     If GetIsFinal() Then
       Result := Result + '; Final';
+
+    If GetIsStatic() Then
+      Result := Result + '; Static';
+
+    If GetIsInLine() Then
+      Result := Result + '; InLine';
   End;
 
   If AForClass And GetIsOverLoad() Then

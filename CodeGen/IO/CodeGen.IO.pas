@@ -588,6 +588,8 @@ Begin
           IsReintroduce       := Generator.ClassDefs[X].ProcedureDefs[Y].IsReIntroduce;
           IsOverLoad          := Generator.ClassDefs[X].ProcedureDefs[Y].IsOverLoad;
           IsFinal             := Generator.ClassDefs[X].ProcedureDefs[Y].IsFinal;
+          IsFinal             := Generator.ClassDefs[X].ProcedureDefs[Y].IsFinal;
+          IsStatic            := Generator.ClassDefs[X].ProcedureDefs[Y].IsStatic;
           ShowInInterface     := Generator.ClassDefs[X].ProcedureDefs[Y].ShowInInterface;
         End;
       End;
@@ -616,6 +618,8 @@ Begin
             IsReintroduce       := Generator.ClassDefs[X].ListSettings.Methods[Y].IsReIntroduce;
             IsOverLoad          := Generator.ClassDefs[X].ListSettings.Methods[Y].IsOverLoad;
             IsFinal             := Generator.ClassDefs[X].ListSettings.Methods[Y].IsFinal;
+            IsStatic            := Generator.ClassDefs[X].ListSettings.Methods[Y].IsStatic;
+            IsInline            := Generator.ClassDefs[X].ListSettings.Methods[Y].IsInLine;
             ShowInInterface     := Generator.ClassDefs[X].ListSettings.Methods[Y].ShowInInterface;
           End;
         End;
@@ -725,6 +729,8 @@ Begin
               IsReintroduce       := ProcedureDefs[Y].IsReIntroduce;
               IsOverLoad          := ProcedureDefs[Y].IsOverLoad;
               IsFinal             := ProcedureDefs[Y].IsFinal;
+              IsStatic            := ProcedureDefs[Y].IsStatic;
+              IsInline            := ProcedureDefs[Y].IsInLine;
               ShowInInterface     := ProcedureDefs[Y].ShowInInterface;
             End;
           End;
@@ -753,6 +759,8 @@ Begin
                   IsReintroduce       := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsReIntroduce;
                   IsOverLoad          := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsOverLoad;
                   IsFinal             := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsFinal;
+                  IsStatic            := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsStatic;
+                  IsInline            := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].IsInLine;
                   ShowInInterface     := AUnitGenerator.ClassDefs[X].ListSettings.Methods[Y].ShowInInterface;
                 End;
               End;

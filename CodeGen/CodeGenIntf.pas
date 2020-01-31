@@ -138,6 +138,12 @@ Type
     Function  GetIsFinal() : Boolean;
     Procedure SetIsFinal(Const AIsFinal : Boolean);
 
+    Function  GetIsStatic() : Boolean;
+    Procedure SetIsStatic(Const AIsStatic : Boolean);
+
+    Function  GetIsInline() : Boolean;
+    Procedure SetIsInline(Const AIsInline : Boolean);
+
     Function  GetShowInInterface() : Boolean;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean);
 
@@ -156,6 +162,8 @@ Type
     Property IsOverRide      : Boolean Read GetIsOverRide      Write SetIsOverRide;
     Property IsOverLoad      : Boolean Read GetIsOverLoad      Write SetIsOverLoad;
     Property IsFinal         : Boolean Read GetIsFinal         Write SetIsFinal;
+    Property IsStatic        : Boolean Read GetIsStatic        Write SetIsStatic;
+    Property IsInline        : Boolean Read GetIsInline        Write SetIsInline;
     Property ShowInInterface : Boolean Read GetShowInInterface Write SetShowInInterface;
 
     Property ProcedureScope : THsFunctionScope Read GetProcedureScope Write SetProcedureScope;

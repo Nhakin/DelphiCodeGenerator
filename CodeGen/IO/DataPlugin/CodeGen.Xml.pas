@@ -163,6 +163,12 @@ Type
     Function  GetIsFinal() : Boolean;
     Procedure SetIsFinal(Const AIsFinal : Boolean);
 
+    Function  GetIsStatic() : Boolean;
+    Procedure SetIsStatic(Const AIsStatic : Boolean);
+
+    Function  GetIsInline() : Boolean;
+    Procedure SetIsInline(Const AIsInline : Boolean);
+
     Function  GetShowInInterface() : Boolean;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean);
 
@@ -179,6 +185,8 @@ Type
     Property IsReintroduce       : Boolean Read GetIsReintroduce       Write SetIsReintroduce;
     Property IsOverLoad          : Boolean Read GetIsOverLoad          Write SetIsOverLoad;
     Property IsFinal             : Boolean Read GetIsFinal             Write SetIsFinal;
+    Property IsStatic            : Boolean Read GetIsStatic            Write SetIsStatic;
+    Property IsInline            : Boolean Read GetIsInline            Write SetIsInline;
     Property ShowInInterface     : Boolean Read GetShowInInterface     Write SetShowInInterface;
 
   End;
@@ -432,6 +440,12 @@ Type
 
     Function  GetIsFinal() : Boolean; Virtual;
     Procedure SetIsFinal(Const AIsFinal : Boolean); Virtual;
+
+    Function  GetIsStatic() : Boolean; Virtual;
+    Procedure SetIsStatic(Const AIsStatic : Boolean); Virtual;
+
+    Function  GetIsInline() : Boolean; Virtual;
+    Procedure SetIsInline(Const AIsInline : Boolean); Virtual;
 
     Function  GetShowInInterface() : Boolean; Virtual;
     Procedure SetShowInInterface(Const AShowInInterface : Boolean); Virtual;
@@ -956,6 +970,26 @@ End;
 Procedure TXmlProcedureDef.SetIsFinal(Const AIsFinal : Boolean);
 Begin
   ChildNodes['IsFinal'].AsBoolean := AIsFinal;
+End;
+
+Function TXmlProcedureDef.GetIsStatic() : Boolean;
+Begin
+  Result := ChildNodes['IsStatic'].AsBoolean
+End;
+
+Procedure TXmlProcedureDef.SetIsStatic(Const AIsStatic : Boolean);
+Begin
+  ChildNodes['IsStatic'].AsBoolean := AIsStatic;
+End;
+
+Function TXmlProcedureDef.GetIsInline() : Boolean;
+Begin
+  Result := ChildNodes['IsInline'].AsBoolean
+End;
+
+Procedure TXmlProcedureDef.SetIsInline(Const AIsInline : Boolean);
+Begin
+  ChildNodes['IsInline'].AsBoolean := AIsInline;
 End;
 
 Function TXmlProcedureDef.GetShowInInterface() : Boolean;
