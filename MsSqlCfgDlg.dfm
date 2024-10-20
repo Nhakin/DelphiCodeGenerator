@@ -7,12 +7,10 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
   ClientWidth = 326
   Color = clBtnFace
   ParentFont = True
-  OldCreateOrder = True
   Position = poOwnerFormCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   object panMain: TPanel
     Left = 0
     Top = 0
@@ -23,6 +21,8 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
     BorderWidth = 5
     ParentColor = True
     TabOrder = 0
+    ExplicitWidth = 324
+    ExplicitHeight = 248
     object pcMain: TPageControl
       Left = 5
       Top = 5
@@ -32,6 +32,8 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
       Align = alClient
       TabOrder = 0
       OnChange = pcMainChange
+      ExplicitWidth = 314
+      ExplicitHeight = 238
       object tsConnection: TTabSheet
         Caption = 'Connection'
         object TestConButton: TBitBtn
@@ -40,9 +42,6 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
           Width = 123
           Height = 25
           Caption = 'Test connection'
-          TabOrder = 0
-          Visible = False
-          OnClick = TestConButtonClick
           Glyph.Data = {
             DE010000424DDE01000000000000760000002800000024000000120000000100
             0400000000006801000000000000000000001000000000000000000000000000
@@ -61,35 +60,39 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
             3333333333338888883333330000333333333333333333333333333333333333
             0000}
           NumGlyphs = 2
+          TabOrder = 0
+          Visible = False
+          OnClick = TestConButtonClick
         end
         object PanSqlSettings: TPanel
           Left = 0
           Top = 0
           Width = 308
-          Height = 218
+          Height = 216
           Align = alClient
           BevelOuter = bvNone
           TabOrder = 1
+          ExplicitWidth = 306
+          ExplicitHeight = 208
           object Label1: TLabel
             Left = 10
             Top = 5
-            Width = 237
-            Height = 13
+            Width = 261
+            Height = 15
             Caption = 'Server name (pick from the list or enter manually)'
           end
           object Label2: TLabel
             Left = 10
             Top = 173
-            Width = 75
-            Height = 13
+            Width = 81
+            Height = 15
             Caption = 'Database name'
           end
           object cboServers: TComboBox
             Left = 10
             Top = 21
             Width = 289
-            Height = 21
-            ItemHeight = 13
+            Height = 23
             TabOrder = 0
             Text = 'SrvProg\Tourmed'
             OnDropDown = cboServersDropDown
@@ -98,9 +101,8 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
             Left = 10
             Top = 189
             Width = 289
-            Height = 21
+            Height = 23
             Style = csDropDownList
-            ItemHeight = 13
             TabOrder = 1
             OnDropDown = cboDatabasesDropDown
           end
@@ -114,7 +116,7 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
             object rbIntegratedSecurity: TRadioButton
               Left = 8
               Top = 20
-              Width = 181
+              Width = 237
               Height = 17
               Caption = 'Use Windows integrated security'
               Checked = True
@@ -135,9 +137,9 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
               Left = 24
               Top = 84
               Width = 121
-              Height = 21
-              EditLabel.Width = 51
-              EditLabel.Height = 13
+              Height = 23
+              EditLabel.Width = 56
+              EditLabel.Height = 15
               EditLabel.Caption = 'User name'
               Enabled = False
               TabOrder = 2
@@ -147,9 +149,9 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
               Left = 156
               Top = 84
               Width = 121
-              Height = 21
-              EditLabel.Width = 46
-              EditLabel.Height = 13
+              Height = 23
+              EditLabel.Width = 50
+              EditLabel.Height = 15
               EditLabel.Caption = 'Password'
               Enabled = False
               PasswordChar = '*'
@@ -162,34 +164,27 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
       object tsTables: TTabSheet
         Caption = 'Tables'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object vstTable: TVirtualStringTree
           Left = 0
           Top = 0
           Width = 308
-          Height = 218
-          Version = '6.2.5.918'
+          Height = 216
           Align = alClient
+          DefaultNodeHeight = 19
           Header.AutoSizeIndex = 0
-          Header.Font.Charset = DEFAULT_CHARSET
-          Header.Font.Color = clWindowText
-          Header.Font.Height = -11
-          Header.Font.Name = 'Tahoma'
-          Header.Font.Style = []
           Header.Options = [hoAutoResize, hoColumnResize, hoDrag, hoShowSortGlyphs, hoVisible]
           TabOrder = 0
           TreeOptions.MiscOptions = [toAcceptOLEDrop, toCheckSupport, toFullRepaintOnResize, toGridExtensions, toInitOnSave, toToggleOnDblClick, toWheelPanning, toEditOnClick]
           TreeOptions.PaintOptions = [toShowButtons, toShowDropmark, toShowTreeLines, toThemeAware, toUseBlendedImages]
           OnGetText = vstTableGetText
           OnInitNode = vstTableInitNode
+          Touch.InteractiveGestures = [igPan, igPressAndTap]
+          Touch.InteractiveGestureOptions = [igoPanSingleFingerHorizontal, igoPanSingleFingerVertical, igoPanInertia, igoPanGutter, igoParentPassthrough]
           Columns = <
             item
               Position = 0
-              Width = 308
-              WideText = 'Tables'
+              Text = 'Tables'
+              Width = 304
             end>
         end
       end
@@ -204,6 +199,8 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
     BevelOuter = bvNone
     ParentColor = True
     TabOrder = 1
+    ExplicitTop = 248
+    ExplicitWidth = 324
     DesignSize = (
       326
       43)
@@ -212,18 +209,21 @@ object FrmMsSqlCfg: TFrmMsSqlCfg
       Top = 8
       Width = 101
       Height = 25
+      Kind = bkOK
+      NumGlyphs = 2
       TabOrder = 0
       OnClick = btnOKClick
-      Kind = bkOK
     end
     object btnCancel: TBitBtn
-      Left = 213
+      Left = 211
       Top = 8
       Width = 93
       Height = 25
       Anchors = [akTop, akRight]
-      TabOrder = 1
       Kind = bkCancel
+      NumGlyphs = 2
+      TabOrder = 1
+      ExplicitLeft = 209
     end
   end
 end

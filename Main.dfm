@@ -5,35 +5,34 @@ object FrmMain: TFrmMain
   BorderStyle = bsNone
   Caption = 'Hs Class Generator'
   ClientHeight = 613
-  ClientWidth = 693
+  ClientWidth = 979
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 96
   TextHeight = 13
   object SpTBXTitleBar: TSpTBXTitleBar
     Left = 0
     Top = 0
-    Width = 693
+    Width = 979
     Height = 613
     Caption = 'Hs Class Generator'
     Active = False
+    Options.TitleBarMaxSize = 26
     object SpTBXDock: TSpTBXDock
       Left = 0
-      Top = 22
-      Width = 693
-      Height = 53
+      Top = 26
+      Width = 979
+      Height = 62
       BoundLines = [blTop, blBottom, blLeft, blRight]
       object SpTBXMain: TSpTBXToolbar
         Left = 0
-        Top = 25
+        Top = 30
         DockMode = dmCannotFloatOrChangeDocks
         DockPos = -2
         DockRow = 1
@@ -95,18 +94,18 @@ object FrmMain: TFrmMain
     end
     object SpTBXStatusBar: TSpTBXStatusBar
       Left = 0
-      Top = 588
-      Width = 693
-      Height = 25
+      Top = 583
+      Width = 979
+      Height = 30
       object SpTBXLabelItem1: TSpTBXLabelItem
         Caption = 'XXX: XX'
       end
     end
     object PanMain: TPanel
       Left = 0
-      Top = 75
-      Width = 693
-      Height = 513
+      Top = 88
+      Width = 979
+      Height = 495
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 3
@@ -114,7 +113,7 @@ object FrmMain: TFrmMain
         Left = 0
         Top = 0
         Width = 262
-        Height = 513
+        Height = 495
         Align = alLeft
         BevelOuter = bvNone
         TabOrder = 0
@@ -122,17 +121,13 @@ object FrmMain: TFrmMain
           Left = 0
           Top = 0
           Width = 262
-          Height = 513
+          Height = 495
           Align = alClient
           Ctl3D = True
+          DefaultNodeHeight = 17
           Header.AutoSizeIndex = 2
           Header.DefaultHeight = 17
-          Header.Font.Charset = DEFAULT_CHARSET
-          Header.Font.Color = clWindowText
-          Header.Font.Height = -11
-          Header.Font.Name = 'Tahoma'
-          Header.Font.Style = []
-          Header.Height = 5
+          Header.Height = 17
           Header.MainColumn = 1
           Header.MinHeight = 0
           Header.Options = [hoAutoResize, hoColumnResize, hoDrag, hoShowSortGlyphs, hoVisible]
@@ -152,6 +147,8 @@ object FrmMain: TFrmMain
           OnInitNode = vstProjectInitNode
           OnKeyAction = vstProjectKeyAction
           OnNewText = vstProjectNewText
+          Touch.InteractiveGestures = [igPan, igPressAndTap]
+          Touch.InteractiveGestureOptions = [igoPanSingleFingerHorizontal, igoPanSingleFingerVertical, igoPanInertia, igoPanGutter, igoParentPassthrough]
           Columns = <
             item
               MaxWidth = 20
@@ -177,15 +174,15 @@ object FrmMain: TFrmMain
       object PanInfos: TPanel
         Left = 267
         Top = 0
-        Width = 426
-        Height = 513
+        Width = 712
+        Height = 495
         Align = alClient
         BevelOuter = bvNone
         TabOrder = 1
         object Panel1: TPanel
           Left = 0
-          Top = 490
-          Width = 426
+          Top = 472
+          Width = 712
           Height = 23
           Align = alBottom
           BevelOuter = bvNone
@@ -194,7 +191,7 @@ object FrmMain: TFrmMain
           object tsMain: TTabSet
             Left = 0
             Top = 0
-            Width = 426
+            Width = 712
             Height = 23
             Align = alClient
             Font.Charset = DEFAULT_CHARSET
@@ -211,16 +208,16 @@ object FrmMain: TFrmMain
         object PanPreview: TPanel
           Left = 0
           Top = 0
-          Width = 426
-          Height = 490
+          Width = 712
+          Height = 472
           Align = alClient
           BevelOuter = bvNone
           TabOrder = 1
-          object MemoPreview: TSynMemo
+          object MemoPreview: TSynEdit
             Left = 0
             Top = 0
-            Width = 426
-            Height = 490
+            Width = 712
+            Height = 472
             Align = alClient
             Color = clBlack
             Font.Charset = DEFAULT_CHARSET
@@ -228,32 +225,52 @@ object FrmMain: TFrmMain
             Font.Height = -13
             Font.Name = 'Courier New'
             Font.Style = []
+            Font.Quality = fqClearTypeNatural
             TabOrder = 0
+            UseCodeFolding = False
             Gutter.Font.Charset = DEFAULT_CHARSET
             Gutter.Font.Color = clWindowText
             Gutter.Font.Height = -11
             Gutter.Font.Name = 'Courier New'
             Gutter.Font.Style = []
-            Gutter.LeadingZeros = True
+            Gutter.Font.Quality = fqClearTypeNatural
             Gutter.ShowLineNumbers = True
+            Gutter.LeadingZeros = True
+            Gutter.Bands = <
+              item
+                Kind = gbkMarks
+                Width = 13
+              end
+              item
+                Kind = gbkLineNumbers
+              end
+              item
+                Kind = gbkFold
+              end
+              item
+                Kind = gbkTrackChanges
+              end
+              item
+                Kind = gbkMargin
+                Width = 3
+              end>
             Highlighter = SynPasSyn
             SearchEngine = SynEditSearch
-            FontSmoothing = fsmNone
+            SelectedColor.Alpha = 0.400000005960464500
           end
         end
       end
       object SpTBXSplitter1: TSpTBXSplitter
         Left = 262
         Top = 0
-        Height = 513
+        Height = 495
         Cursor = crSizeWE
+        Color = clBtnFace
+        ParentColor = False
       end
     end
   end
   object SynPasSyn: TSynPasSyn
-    Options.AutoDetectEnabled = False
-    Options.AutoDetectLineLimit = 0
-    Options.Visible = False
     CommentAttri.Background = clBlack
     CommentAttri.Foreground = clYellow
     IdentifierAttri.Background = clBlack
@@ -270,14 +287,15 @@ object FrmMain: TFrmMain
     CharAttri.Foreground = clRed
     SymbolAttri.Background = clBlack
     SymbolAttri.Foreground = clWhite
-    Left = 14
-    Top = 118
+    TypeAttri.Foreground = clAqua
+    Left = 22
+    Top = 206
   end
   object imgToolBar: TImageList
     Left = 14
     Top = 86
     Bitmap = {
-      494C010172007400D80010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010172007400040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       000000000000360000002800000040000000D0010000010020000000000000D0
       0100000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000D6D6D600A552
@@ -4114,16 +4132,16 @@ object FrmMain: TFrmMain
   end
   object OpenDialog1: TOpenDialog
     Filter = 'Xml Files|*.xml|JSon Files|*.json|All Files|*.xml;*.json'
-    Left = 78
-    Top = 118
+    Left = 190
+    Top = 206
   end
   object SynEditSearch: TSynEditSearch
-    Left = 46
-    Top = 118
+    Left = 102
+    Top = 206
   end
   object alMain: TActionList
     Images = imgToolBar
-    Left = 46
+    Left = 86
     Top = 86
     object ActNew: TAction
       Caption = 'New'
@@ -4163,8 +4181,8 @@ object FrmMain: TFrmMain
   end
   object SpTBXBItemContainer1: TSpTBXBItemContainer
     Images = imgToolBar
-    Left = 79
-    Top = 87
+    Left = 15
+    Top = 143
     object SpTBXMRU: TSpTBXMRUListItem
       OnClick = SpTBXMRUClick
     end
@@ -4324,7 +4342,7 @@ object FrmMain: TFrmMain
     OnPopup = popVTProjectPopup
     LinkSubitems = SpTBXpopTv
     OnClosePopup = popVTProjectClosePopup
-    Left = 112
-    Top = 88
+    Left = 128
+    Top = 144
   end
 end

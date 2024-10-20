@@ -51,8 +51,8 @@ Type
 implementation
 
 
-Uses
-  Classes, SysUtils, HsXmlDocEx, HsStringListEx, HsBase64Ex, FastStringFuncs, 
+Uses Vcl.Dialogs,
+  Classes, SysUtils, HsXmlDocEx, HsStringListEx, HsBase64Ex, HsFunctionsEx,//FastStringFuncs,
   ApplicationOptionsImpl, ApplicationOptions.Bin, ApplicationOptions.Ini,
   ApplicationOptions.Xml, ApplicationOptions.JSon;
 
@@ -213,6 +213,7 @@ Begin
   lLst := TStringList.Create();
   Try
     IniImpl.GetStrings(lLst);
+//ShowMessage(lLst.Text);
     Result := lLst.Text;
 
     Finally
@@ -257,7 +258,7 @@ End;
 Procedure TApplicationOptionsIOImpl.EncryptStream(ASource, ATarget : IStreamEx);
 Var lBytes   : Array Of Byte;
     lStrStrm : IStringStreamEx;
-    lHexStr  : String;
+    lHexStr  : AnsiString;
 Begin
   lHexStr := '';
   SetLength(lBytes, ASource.Size);

@@ -2,7 +2,7 @@ Unit VTEditors;
 
 Interface
 
-{$Define TntSupport}
+{x$Define TntSupport}
 {$Define DELPHI6_LVL}
 
 Uses Windows, Messages, Mask, StdCtrls, SysUtils,
@@ -1237,14 +1237,18 @@ Begin
       isF := False;
     If Not (ord(s[i]) In Hex_Codes) Then
       isH := False;
+    With TFormatSettings.Create() Do
+    Begin
+      If (s[i] = thousandseparator) And (i - th < 3) Then
+        isF := False;
 
-    If (s[i] = thousandseparator) And (i - th < 3) Then
-      isF := False;
+      If s[i] = thousandseparator Then
+        th := i;
 
-    If s[i] = thousandseparator Then
-      th := i;
-    If s[i] = decimalseparator Then
-      inc(de);
+      If s[i] = decimalseparator Then
+        inc(de);
+    End;
+
     If s[i] = '-' Then
       inc(mi);
   End;
@@ -1266,8 +1270,9 @@ End;
 
 Function StripThousandSep(s: String): String;
 Begin
-  While (Pos(ThousandSeparator, s) > 0) Do
-    Delete(s, Pos(ThousandSeparator, s), 1);
+  With TFormatSettings.Create() Do
+    While (Pos(ThousandSeparator, s) > 0) Do
+      Delete(s, Pos(ThousandSeparator, s), 1);
   Result := s;
 End;
 
@@ -2200,12 +2205,13 @@ Var
       exit;
     End;
 
-    If (Pos(decimalseparator, s) > 0) Then
-    Begin
-      mdist := Length(s) - Pos(decimalseparator, s);
-      If (inspos >= Pos(decimalseparator, s)) And (mdist >= FPrecision) Then
-        Result := True;
-    End;
+    With TFormatSettings.Create() Do
+      If (Pos(decimalseparator, s) > 0) Then
+      Begin
+        mdist := Length(s) - Pos(decimalseparator, s);
+        If (inspos >= Pos(decimalseparator, s)) And (mdist >= FPrecision) Then
+          Result := True;
+      End;
   End;
 
   Function scandistance(s: String; inspos: Integer): Boolean;
@@ -2216,25 +2222,28 @@ Var
     inspos := inspos - Length(fPrefix);
     mdist  := Length(s);
 
-    If (Pos(thousandseparator, s) = 0) Then
+    With TFormatSettings.Create() Do
     Begin
-      Result := False;
-      Exit;
-    End;
-
-    While (Pos(thousandseparator, s) > 0) Do
-    Begin
-      If abs(Pos(thousandseparator, s) - inspos) < mdist Then
-        mdist := abs(Pos(thousandseparator, s) - inspos);
-      If (abs(Pos(thousandseparator, s) - inspos) < 3) Then
+      If (Pos(thousandseparator, s) = 0) Then
       Begin
-        Result := True;
-        break;
+        Result := False;
+        Exit;
       End;
 
-      If inspos > Pos(thousandseparator, s) Then
-        inspos := inspos - Pos(thousandseparator, s);
-      delete(s, 1, Pos(thousandseparator, s));
+      While (Pos(thousandseparator, s) > 0) Do
+      Begin
+        If abs(Pos(thousandseparator, s) - inspos) < mdist Then
+          mdist := abs(Pos(thousandseparator, s) - inspos);
+        If (abs(Pos(thousandseparator, s) - inspos) < 3) Then
+        Begin
+          Result := True;
+          break;
+        End;
+
+        If inspos > Pos(thousandseparator, s) Then
+          inspos := inspos - Pos(thousandseparator, s);
+        delete(s, 1, Pos(thousandseparator, s));
+      End;
     End;
 
     If (mdist > 3) Then
@@ -2323,24 +2332,28 @@ Begin
     Exit;
   End;
 
-  If (msg.charcode = ord('.')) And (FExcelStyleDecimalSeparator) And (msg.keydata And $400000 = $400000) Then
+  With TFormatSettings.Create() Do
   Begin
-    msg.charcode := ord(decimalseparator);
-  End;
+    If (msg.charcode = ord('.')) And (FExcelStyleDecimalSeparator) And (msg.keydata And $400000 = $400000) Then
+    Begin
+      msg.charcode := ord(decimalseparator);
+    End;
 
-  If (msg.charcode = ord(',')) And (FExcelStyleDecimalSeparator) And (msg.keydata And $400000 = $400000) Then
-  Begin
-    msg.charcode := ord(decimalseparator);
+    If (msg.charcode = ord(',')) And (FExcelStyleDecimalSeparator) And (msg.keydata And $400000 = $400000) Then
+    Begin
+      msg.charcode := ord(decimalseparator);
+    End;
+
+    If (FLengthLimit > 0) And (FixedLength(self.Text) > FLengthLimit) And
+      (SelLength = 0) And (SelStart < DecimalPos)
+      And (msg.charcode <> vk_back) And (msg.charcode <> ord(decimalseparator)) And
+      Not AllowMin(chr(msg.CharCode)) Then
+      Exit;
   End;
 
   If (msg.CharCode = vk_back) And (FPrefix <> '') Then
     If (SelStart <= Length(FPrefix)) And (SelLength = 0) Then
       Exit;
-
-  If (FLengthLimit > 0) And (FixedLength(self.Text) > FLengthLimit) And
-    (SelLength = 0) And (SelStart < DecimalPos)
-    And (msg.charcode <> vk_back) And (msg.charcode <> ord(decimalseparator)) And Not AllowMin(chr(msg.CharCode)) Then
-    Exit;
 
   If (msg.charcode = vk_back) Then
   Begin
@@ -2460,170 +2473,176 @@ Begin
           InHerited;
       End;
     End;
-    
+
     etMoney:
     Begin
-      If (chr(msg.charcode) = decimalseparator) And ((Pos(decimalseparator, self.Text) > 0) Or (FPrecision = 0)) Then
+      With TFormatSettings.Create() Do
       Begin
-        If (FPrecision > 0) Then
+        If (chr(msg.charcode) = decimalseparator) And ((Pos(decimalseparator, self.Text) > 0) Or (FPrecision = 0)) Then
         Begin
-          If SelLength = Length(Text) Then
-            Text := '0,0';
-          SelectAfterDecimal;
-        End;
-        Exit;
-      End;
-
-      If (msg.charcode In Money_Codes + Ctrl_Codes) Or (chr(msg.charcode) = decimalseparator) Then
-      Begin
-        If (chr(msg.charcode) = thousandseparator) Or (chr(msg.charcode) = decimalseparator) Then
-        Begin
-          If scandistance(self.Text, SelStart) Then
-            Exit;
-        End;
-
-        If scanprecision(self.Text, SelStart) And (msg.charcode In [$30..$39, ord(decimalseparator)]) And (SelLength = 0) Then
-        Begin
-          If (FPrecision > 0) And (SelStart - Length(fprefix) >= Pos(decimalseparator, self.text))
-            And (msg.charcode In [$30..$39]) And (SelStart - Length(fprefix) < Length(self.text)) Then
+          If (FPrecision > 0) Then
           Begin
-            SelLength := 1;
-          End
-          Else
-            Exit;
-        End;
-
-        If (SelStart = 0) And (self.Text = '') And (msg.charcode = ord(decimalseparator)) Then
-        Begin
-          InHerited Text := '0' + decimalseparator;
-          SelStart := 2;
-          SetModified(True);
-          Exit;
-        End;
-
-        If (msg.charcode = ord('-')) And (SelLength = 0) Then
-        Begin
-          s := self.Text;
-          oldprec := FPrecision;
-          FPrecision := 0;
-          oldSelStart := SelStart;
-
-          If (Pos('-', s) <> 0) Then
-          Begin
-            delete(s, 1, 1);
-            InHerited Text := s + Suffix;
-            SetModified(True);
-            If (oldSelStart > 0) And (oldSelStart > Length(fPrefix)) Then
-              SelStart := oldSelStart - 1
-            Else
-              SelStart := Length(Prefix);
-          End
-          Else
-          Begin
-            If (Floatvalue <> 0) Or (1 > 0) Then
-            Begin
-              InHerited Text := '-' + self.Text + Suffix;
-              SelLength := 0;
-              SelStart  := oldSelStart + 1;
-              SetModified(True);
-            End;
+            If SelLength = Length(Text) Then
+              Text := '0,0';
+            SelectAfterDecimal;
           End;
-          FPrecision := oldprec;
           Exit;
         End;
 
-        InHerited;
-
-        If (self.Text <> '') And (self.Text <> '-') And
-          (chr(msg.charcode) <> decimalseparator) Then
+        If (msg.charcode In Money_Codes + Ctrl_Codes) Or (chr(msg.charcode) = decimalseparator) Then
         Begin
-          If InHerited Modified Then
+          If (chr(msg.charcode) = thousandseparator) Or (chr(msg.charcode) = decimalseparator) Then
+          Begin
+            If scandistance(self.Text, SelStart) Then
+              Exit;
+          End;
+
+          If scanprecision(self.Text, SelStart) And (msg.charcode In [$30..$39, ord(decimalseparator)]) And (SelLength = 0) Then
+          Begin
+            If (FPrecision > 0) And (SelStart - Length(fprefix) >= Pos(decimalseparator, self.text))
+              And (msg.charcode In [$30..$39]) And (SelStart - Length(fprefix) < Length(self.text)) Then
+            Begin
+              SelLength := 1;
+            End
+            Else
+              Exit;
+          End;
+
+          If (SelStart = 0) And (self.Text = '') And (msg.charcode = ord(decimalseparator)) Then
+          Begin
+            InHerited Text := '0' + decimalseparator;
+            SelStart := 2;
             SetModified(True);
+            Exit;
+          End;
 
-          AutoSeparators;
+          If (msg.charcode = ord('-')) And (SelLength = 0) Then
+          Begin
+            s := self.Text;
+            oldprec := FPrecision;
+            FPrecision := 0;
+            oldSelStart := SelStart;
 
+            If (Pos('-', s) <> 0) Then
+            Begin
+              delete(s, 1, 1);
+              InHerited Text := s + Suffix;
+              SetModified(True);
+              If (oldSelStart > 0) And (oldSelStart > Length(fPrefix)) Then
+                SelStart := oldSelStart - 1
+              Else
+                SelStart := Length(Prefix);
+            End
+            Else
+            Begin
+              If (Floatvalue <> 0) Or (1 > 0) Then
+              Begin
+                InHerited Text := '-' + self.Text + Suffix;
+                SelLength := 0;
+                SelStart  := oldSelStart + 1;
+                SetModified(True);
+              End;
+            End;
+            FPrecision := oldprec;
+            Exit;
+          End;
+
+          InHerited;
+
+          If (self.Text <> '') And (self.Text <> '-') And
+            (chr(msg.charcode) <> decimalseparator) Then
+          Begin
+            If InHerited Modified Then
+              SetModified(True);
+
+            AutoSeparators;
+
+          End;
         End;
       End;
     End;
 
     etFloat:
     Begin
-      If (msg.charcode = ord(',')) And (DecimalSeparator <> ',') And (ThousandSeparator <> ',') Then
-        Exit;
-      If (msg.charcode = ord('.')) And (DecimalSeparator <> '.') And (ThousandSeparator <> '.') Then
-        Exit;
-
-      If (msg.charcode In Float_Codes + Ctrl_Codes) Then
+      With TFormatSettings.Create() Do
       Begin
-        If (chr(msg.charcode) = decimalseparator) And
-          (Pos(decimalseparator, self.getseltext) = 0) And
-          ((Pos(decimalseparator, self.Text) > 0) Or (FPrecision = 0)) Then
-        Begin
-          If (FPrecision > 0) Then
-            SelectAfterDecimal;
+        If (msg.charcode = ord(',')) And (DecimalSeparator <> ',') And (ThousandSeparator <> ',') Then
           Exit;
-        End;
+        If (msg.charcode = ord('.')) And (DecimalSeparator <> '.') And (ThousandSeparator <> '.') Then
+          Exit;
 
-        If ((msg.charcode = ord(',')) And (Pos(',', self.Text) > 0) And (Pos(',', self.getSelText) = 0)) And
-          (chr(msg.charcode) <> thousandseparator) Then
-          exit;
-
-        If (chr(msg.charcode) = thousandseparator) Or (chr(msg.charcode) = decimalseparator) Then
+        If (msg.charcode In Float_Codes + Ctrl_Codes) Then
         Begin
-          If scandistance(self.Text, SelStart) Then
-            exit;
-        End;
-
-        If ScanPrecision(self.text, SelStart) And (msg.charcode In [$30..$39, ord(decimalseparator)]) And (SelLength = 0) Then
-        Begin
-          If (FPrecision > 0) And (SelStart - Length(fprefix) >= Pos(decimalseparator, self.Text))
-            And (msg.CharCode In [$30..$39]) And (SelStart - Length(fprefix) < Length(self.Text)) Then
+          If (chr(msg.charcode) = decimalseparator) And
+            (Pos(decimalseparator, self.getseltext) = 0) And
+            ((Pos(decimalseparator, self.Text) > 0) Or (FPrecision = 0)) Then
           Begin
-            SelLength := 1;
-          End
-          Else
+            If (FPrecision > 0) Then
+              SelectAfterDecimal;
             Exit;
-        End;
-
-        If (SelStart = 0) And (self.Text = '') And (msg.charcode = ord(decimalseparator)) Then
-        Begin
-          InHerited Text := '0' + decimalseparator;
-          SelStart := 2;
-          SetModified(True);
-          Exit;
-        End;
-
-        If (msg.charcode = ord('-')) And (SelLength = 0) Then
-        Begin
-          s := self.Text;
-          oldprec := FPrecision;
-          FPrecision := 0;
-          oldSelStart := SelStart;
-
-          If (Pos('-', s) <> 0) Then
-          Begin
-            delete(s, 1, 1);
-            InHerited Text := s + Suffix;
-            If (oldSelStart > 0) And (oldSelStart > Length(fPrefix)) Then
-              SelStart := oldSelStart - 1
-            Else
-              SelStart := Length(Prefix);
-            SetModified(True);
-          End
-          Else
-          Begin
-            If (floatvalue <> 0) Or (1 > 0) Then
-            Begin
-              InHerited Text := '-' + self.text + Suffix;
-              SelLength := 0;
-              SelStart  := oldSelStart + 1;
-              SetModified(True);
-            End;
           End;
-          FPrecision := oldprec;
-          Exit;
+
+          If ((msg.charcode = ord(',')) And (Pos(',', self.Text) > 0) And (Pos(',', self.getSelText) = 0)) And
+            (chr(msg.charcode) <> thousandseparator) Then
+            exit;
+
+          If (chr(msg.charcode) = thousandseparator) Or (chr(msg.charcode) = decimalseparator) Then
+          Begin
+            If scandistance(self.Text, SelStart) Then
+              exit;
+          End;
+
+          If ScanPrecision(self.text, SelStart) And (msg.charcode In [$30..$39, ord(decimalseparator)]) And (SelLength = 0) Then
+          Begin
+            If (FPrecision > 0) And (SelStart - Length(fprefix) >= Pos(decimalseparator, self.Text))
+              And (msg.CharCode In [$30..$39]) And (SelStart - Length(fprefix) < Length(self.Text)) Then
+            Begin
+              SelLength := 1;
+            End
+            Else
+              Exit;
+          End;
+
+          If (SelStart = 0) And (self.Text = '') And (msg.charcode = ord(decimalseparator)) Then
+          Begin
+            InHerited Text := '0' + decimalseparator;
+            SelStart := 2;
+            SetModified(True);
+            Exit;
+          End;
+
+          If (msg.charcode = ord('-')) And (SelLength = 0) Then
+          Begin
+            s := self.Text;
+            oldprec := FPrecision;
+            FPrecision := 0;
+            oldSelStart := SelStart;
+
+            If (Pos('-', s) <> 0) Then
+            Begin
+              delete(s, 1, 1);
+              InHerited Text := s + Suffix;
+              If (oldSelStart > 0) And (oldSelStart > Length(fPrefix)) Then
+                SelStart := oldSelStart - 1
+              Else
+                SelStart := Length(Prefix);
+              SetModified(True);
+            End
+            Else
+            Begin
+              If (floatvalue <> 0) Or (1 > 0) Then
+              Begin
+                InHerited Text := '-' + self.text + Suffix;
+                SelLength := 0;
+                SelStart  := oldSelStart + 1;
+                SetModified(True);
+              End;
+            End;
+            FPrecision := oldprec;
+            Exit;
+          End;
+          InHerited;
         End;
-        InHerited;
       End;
     End;
 
@@ -2785,30 +2804,33 @@ Begin
         end;
       etFloat, etMoney:
         begin
-          if IsType(newstr) in [atFloat, atNumeric] then
-          begin
-{$IFNDEF DELPHI_UNICODE}
-            if not ((FPrecision = 0) and (Pos(DecimalSeparator, StrPas(Content)) > 0)) then
-              begin
-                if not (not Signed and (pos('-', newstr) > 0)) then
+          With TFormatSettings.Create() Do
+          Begin
+            if IsType(newstr) in [atFloat, atNumeric] then
+            begin
+  {$IFNDEF DELPHI_UNICODE}
+              if not ((FPrecision = 0) and (Pos(DecimalSeparator, StrPas(Content)) > 0)) then
                 begin
-                  self.Text := newstr;
-                  Floatvalue := Floatvalue;
-                  SetModified(True);
+                  if not (not Signed and (pos('-', newstr) > 0)) then
+                  begin
+                    self.Text := newstr;
+                    Floatvalue := Floatvalue;
+                    SetModified(True);
+                  end;
                 end;
-              end;
-{$Else}
-            if not ((FPrecision = 0) and (Pos(DecimalSeparator, Clipboard.AsText) > 0)) then
-              begin
-                if not (not Signed and (pos('-', newstr) > 0)) then
+  {$Else}
+              if not ((FPrecision = 0) and (Pos(DecimalSeparator, Clipboard.AsText) > 0)) then
                 begin
-                  self.Text := newstr;
-                  Floatvalue := Floatvalue;
-                  SetModified(True);
+                  if not (not Signed and (pos('-', newstr) > 0)) then
+                  begin
+                    self.Text := newstr;
+                    Floatvalue := Floatvalue;
+                    SetModified(True);
+                  end;
                 end;
-              end;
-{$ENDIF}
-          end;
+  {$ENDIF}
+            end;
+          End;
         end;
       etString, etPassWord: self.Text := NewStr;
       etLowerCase: self.Text := AnsiLowerCase(NewStr);
@@ -3270,7 +3292,8 @@ Procedure THsVTCustomEdit.SelectAfterDecimal;
 Var
   i: Integer;
 Begin
-  i := Pos(decimalseparator, self.Text);
+  With TFormatSettings.Create() Do
+    i := Pos(decimalseparator, self.Text);
 
   If (i > 0) Then
     SelStart := i + Length(fPrefix)
@@ -3282,7 +3305,9 @@ Procedure THsVTCustomEdit.SelectBeforeDecimal;
 Var
   i: Integer;
 Begin
-  i := Pos(decimalseparator, self.text);
+  With TFormatSettings.Create() Do
+    i := Pos(decimalseparator, self.text);
+
   If (i > 0) Then
     SelStart := i + Length(fPrefix) - 1
   Else
@@ -3296,7 +3321,7 @@ Begin
   Allow := True;
   If Assigned(FOnClipboardCopy) And Not FBlockCopy Then
     FOnClipboardCopy(self, copy(self.Text, SelStart + 1 - Length(fPrefix), SelLength), allow);
-  FBlockCopy := False;  
+  FBlockCopy := False;
   If Allow Then
     InHerited;
 End;
@@ -3420,7 +3445,8 @@ End;
 Function THsVTCustomEdit.DecimalPos: Integer;
 Var i : Integer;
 Begin
-  i := Pos(decimalseparator, self.text);
+  With TFormatSettings.Create() Do
+    i := Pos(decimalseparator, self.text);
 
   If (i = 0) Then
     Result := Length(fprefix) + Length(self.text) + Length(fSuffix) + 1
@@ -3432,7 +3458,10 @@ Function THsVTCustomEdit.FixedLength(s: String): Integer;
 Var i : Integer;
 Begin
   s := StripThousandSep(s);
-  i := Pos(decimalseparator, s);
+
+  With TFormatSettings.Create() Do
+    i := Pos(decimalseparator, s);
+
   If (i > 0) Then
     Result := i
   Else
@@ -3560,19 +3589,22 @@ Begin
   Else
     neg := '';
 
-  If (Pos(DecimalSeparator, s) > 0) Then
-    s := Copy(s, Pos(DecimalSeparator, s), 255)
-  Else
-    s := '';
+  With TFormatSettings.Create() Do
+  Begin
+    If (Pos(DecimalSeparator, s) > 0) Then
+      s := Copy(s, Pos(DecimalSeparator, s), 255)
+    Else
+      s := '';
 
-  d := Trunc(Abs(self.FloatValue));
+    d := Trunc(Abs(self.FloatValue));
 
-  If FAutoThousandSeparator Then
-    si := Format('%n', [d])
-  Else
-    si := Format('%f', [d]);
+    If FAutoThousandSeparator Then
+      si := Format('%n', [d])
+    Else
+      si := Format('%f', [d]);
 
-  si := Copy(si, 1, Pos(decimalseparator, si) - 1);
+    si := Copy(si, 1, Pos(decimalseparator, si) - 1);
+  End;
 
   OldPrec := FPrecision;
   FPrecision := 0;
@@ -3705,15 +3737,16 @@ Begin
           Result := EStrToFloat(s);
       End;  
     etMoney:
-      If self.Text <> '' Then
-      Begin
-        s := StripThousandSep(self.Text);
-        If (Pos(Decimalseparator, s) = Length(s)) Then
-          Delete(s, Pos(decimalseparator, s), 1);
-        If (s = '') Or (s = '-') Then
-          Result := 0 Else
-          Result := EStrToFloat(s);
-      End;
+      With TFormatSettings.Create() Do
+        If self.Text <> '' Then
+        Begin
+          s := StripThousandSep(self.Text);
+          If (Pos(Decimalseparator, s) = Length(s)) Then
+            Delete(s, Pos(decimalseparator, s), 1);
+          If (s = '') Or (s = '-') Then
+            Result := 0 Else
+            Result := EStrToFloat(s);
+        End;
   End;
 End;
 
@@ -3872,16 +3905,21 @@ End;
 
 Function THsVTCustomEdit.EStrToFloat(s: String): Extended;
 Begin
-  If Pos(ThousandSeparator, s) > 0 Then
-    s := StripThousandSep(s);
+  With TFormatSettings.Create() Do
+  Begin
+    If Pos(ThousandSeparator, s) > 0 Then
+      s := StripThousandSep(s);
 
-  If (FPrecision > 0) And (Length(s) > FPrecision) Then
-    If s[Length(s) - FPrecision] = Thousandseparator Then
-      s[Length(s) - FPrecision] := Decimalseparator;
+    If (FPrecision > 0) And (Length(s) > FPrecision) Then
+      If s[Length(s) - FPrecision] = Thousandseparator Then
+        s[Length(s) - FPrecision] := Decimalseparator;
+  End;
+
   Try
     Result := StrToFloat(s);
-  Except
-    Result := 0;
+
+    Except
+      Result := 0;
   End;
 End;
 

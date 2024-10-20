@@ -2,7 +2,7 @@ unit CodeGen.VT;
 
 interface
 
-Uses HsInterfaceEx, VirtualTrees, TypInfo, Classes,
+Uses VirtualTrees, TypInfo, Classes, HsInterfaceEx,
   CodeGenType, CodeGenIntf;
 
 Type
@@ -49,10 +49,10 @@ Type
 
   IHsVTSettingNodes = Interface(IInterfaceListEx)
     ['{4B61686E-29A0-2112-9E1A-668F06C33FF8}']
-    Function  GetEnumerator() : IHsVTSettingNodeEnumerator;
+    Function  GetEnumerator() : IHsVTSettingNodeEnumerator; OverLoad;
 
-    Function  Get(Index : Integer) : IHsVTSettingNode;
-    Procedure Put(Index : Integer; Const Item : IHsVTSettingNode);
+    Function  Get(Index : Integer) : IHsVTSettingNode; OverLoad;
+    Procedure Put(Index : Integer; Const Item : IHsVTSettingNode); OverLoad;
 
     Function  GetVTNode() : PVirtualNode;
     Procedure SetVTNode(ANode : PVirtualNode);
@@ -246,7 +246,7 @@ Type
 
 implementation
 
-Uses SysUtils, Dialogs,
+Uses SysUtils, Dialogs, VirtualTrees.Types,
   CodeGenImpl;
 
 Type
@@ -301,17 +301,17 @@ Type
       Function GetCurrent() : IHsVTSettingNode; OverLoad;
 
     End;
-      
+
   Strict Private
     FVTNode : PVirtualNode;
     FNodeCaption : String;
     FSettingVisible : Boolean;
 
   Protected
-    Function  GetEnumerator() : IHsVTSettingNodeEnumerator; OverLoad;
+    Function  GetEnumerator() : IHsVTSettingNodeEnumerator; //OverLoad;
 
-    Function  Get(Index : Integer) : IHsVTSettingNode; OverLoad;
-    Procedure Put(Index : Integer; Const Item : IHsVTSettingNode); OverLoad;
+    Function  Get(Index : Integer) : IHsVTSettingNode; //OverLoad;
+    Procedure Put(Index : Integer; Const Item : IHsVTSettingNode); //OverLoad;
     Function  Add() : IHsVTSettingNode; OverLoad;
     Function  IndexOf(Const ANodeSettingName : String) : Integer; OverLoad;
 
@@ -330,7 +330,7 @@ Type
 
     Function  NodeSettingByName(Const ANodeSettingName : String) : IHsVTSettingNode;
 
-    Property Items[Index : Integer] : IHsVTSettingNode Read Get Write Put;
+    Property Items[Index : Integer] : IHsVTSettingNode Read Get Write Put; Default;
 
   Public
     Procedure AfterConstruction(); OverRide;
@@ -622,7 +622,7 @@ Begin
 
       For X := lEnumData.MinValue To lEnumData.MaxValue Do
       Begin
-        AList.Add(Copy(PChar(lNames), 2, lNames[0]));
+        AList.Add(Copy(PAnsiChar(lNames), 2, lNames[0]));
         lNames := @lNames[lNames[0] + 1];
       End; 
     End;
@@ -848,13 +848,15 @@ End;
 
 Function THsVTSettingNodes.NodeSettingByName(Const ANodeSettingName : String) : IHsVTSettingNode;
 Var lItem : IHsVTSettingNode;
+    X : Integer;
 Begin
   Result := Nil;
 
-  For lItem In IHsVTSettingNodes(Self) Do
-    If SameText(lItem.SettingName, ANodeSettingName) Then
+//  For lItem In Self Do//IHsVTSettingNodes(Self) Do
+  For X := 0 To Count - 1 Do
+    If SameText(Self[X].SettingName, ANodeSettingName) Then
     Begin
-      Result := lItem;
+      Result := Self[X];
       Break;
     End;
 
@@ -954,7 +956,7 @@ Begin
   lEnumNames := @lTypeData.NameList;
   For X := lTypeData.MinValue To lTypeData.MaxValue Do
   Begin
-    AStrings.Add(Copy(PChar(lEnumNames), 2, lEnumNames[0]));
+    AStrings.Add(Copy(PAnsiChar(lEnumNames), 2, lEnumNames[0]));
     lEnumNames := @lEnumNames[lEnumNames[0] + 1];
   End;
 End;
@@ -1704,7 +1706,7 @@ Begin
   lEnumNames := @lTypeData.NameList;
   For X := lTypeData.MinValue To lTypeData.MaxValue Do
   Begin
-    AStrings.Add(Copy(PChar(lEnumNames), 2, lEnumNames[0]));
+    AStrings.Add(Copy(PAnsiChar(lEnumNames), 2, lEnumNames[0]));
     lEnumNames := @lEnumNames[lEnumNames[0] + 1];
   End;
 End;

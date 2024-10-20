@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ComCtrls, ToolWin, StdCtrls, ExtCtrls, ImgList, SynEdit, SynMemo,
+  Dialogs, ComCtrls, ToolWin, StdCtrls, ExtCtrls, ImgList, SynEdit, //SynMemo,
   SynEditHighlighter, SynHighlighterPas;
 
 type
@@ -18,7 +18,7 @@ type
     SBMain: TStatusBar;
     Panel1: TPanel;
     SynPasSyn: TSynPasSyn;
-    MemoPreview: TSynMemo;
+    MemoPreview: TSynEdit;
 
   private
 

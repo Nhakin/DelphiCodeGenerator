@@ -53,8 +53,8 @@ Type
 
     Procedure Clear();
     Procedure Rename(Const FileName : String; Reload : Boolean);
-    Procedure GetStrings(List: TStrings);
-    Procedure SetStrings(List: TStrings);
+    Procedure GetStrings(Const List: TStrings);
+    Procedure SetStrings(Const List: TStrings);
     
   End;
 

@@ -441,10 +441,8 @@ Begin
   Try
     For X := 0 To AList.Count - 1 Do
       Add(
-        PadR(
-          Copy(AList[X], 1, Pos(':', AList[X]) - 1), lPos) + ' : ' +
-          Copy(AList[X], Pos(':', AList[X]) + 1, Length(AList[X])
-        )
+        PadR(Copy(AList[X], 1, Pos(':', AList[X]) - 1), lPos) + ' : ' +
+        Copy(AList[X], Pos(':', AList[X]) + 1, Length(AList[X]))
       );
 
     AList.Text := Text;
@@ -1311,7 +1309,7 @@ Begin
 
   If FMakeList Then
   Begin
-    If FListSettings.UseEnumerator And (FDataType = dsNone) Then
+    If FListSettings.UseEnumerator Then//And (FDataType = dsNone) Then
     Begin
       CreateGUID(lGuidRec.Guid);
       lGuidRec.Int1 := MagicGuid;
@@ -1428,6 +1426,123 @@ Var lTmpList   : TStringList;
     lPublFunc  ,
     lSPrivFunc ,
     lSProtFunc : IHsProcedureDefs;
+
+  Procedure GenerateItemClass();
+  Var X : Integer;
+  Begin
+    If FListSettings.IsSealed Then
+      AList.Add('    T' + FClsName + 'Item = Class Sealed(TInterfacedObjectEx, I' + FClsName + ')')
+    Else
+      AList.Add('    T' + FClsName + 'Item = Class(TInterfacedObjectEx, I' + FClsName + ')');
+
+    If FUseStrict Then
+      AList.Add('    Strict Private')
+    Else
+      AList.Add('    Private');
+
+    lTmpList.Clear();
+
+    If FTrackChange Then
+      lTmpList.Add('      FDataState:TDataState;');
+
+    For X := 0 To FPropertyDefs.Count - 1 Do
+      lTmpList.Add('      ' + FPropertyDefs.Items[X].GetVariableDefinition());
+
+    If lTmpList.Count > 0 Then
+    Begin
+      AlignVariables(lTmpList);
+
+      For X := 0 To lTmpList.Count - 1 Do
+        AList.Add(lTmpList[X]);
+
+      AList.Add('');
+    End;
+
+    If lSPrivFunc.Count > 0 Then
+    Begin
+      If Not FUseStrict Then
+        AList.Add('    Strict Private');
+
+      For X := 0 To lSPrivFunc.Count - 1 Do
+        AList.Add('      ' + lSPrivFunc[X].GetProcedureDefinition(True));
+      AList.Add('');
+    End;
+
+    If lPrivFunc.Count > 0 Then
+    Begin
+      AList.Add('    Private');
+
+      For X := 0 To lPrivFunc.Count - 1 Do
+        AList.Add('      ' + lPrivFunc[X].GetProcedureDefinition(True));
+      AList.Add('');
+    End;
+
+    If lSProtFunc.Count > 0 Then
+    Begin
+      AList.Add('    Strict Protected');
+
+      For X := 0 To lSProtFunc.Count - 1 Do
+        AList.Add('      ' + lSProtFunc[X].GetProcedureDefinition(True));
+      AList.Add('');
+    End;
+
+    AList.Add('    Protected');
+//-->
+    For X := 0 To FPropertyDefs.Count - 1 Do
+      AList.Add(FPropertyDefs.Items[X].GetPropertyFunctions(True, True, False, False, 3));
+
+    For X := 0 To lProtFunc.Count - 1 Do
+      AList.Add('      ' + lProtFunc[X].GetProcedureDefinition(True));
+    If lProtFunc.Count > 0 Then
+      AList.Add('');
+
+    If FTrackChange Then
+    Begin
+      AList.Add('      Procedure Changed();');
+      AList.Add('      Function  GetModified() : Boolean;');
+      AList.Add('');
+    End;
+
+    AList.Add('      Procedure Clear();');
+
+
+    AList.Add('');
+    AList.Add('    Public');
+    If FDataType = dsMSSql Then
+    Begin
+      AList.Add('      Procedure New();');
+      AList.Add(GetLoadParamType('      Procedure Load(AId : %DataType%);'));
+      AList.Add('      Procedure Save();');
+      AList.Add('      Procedure Delete();');
+      AList.Add('      Procedure CreateTable();');
+    End;
+    AList.Add('      Procedure Assign(ASource : TObject); ReIntroduce; Virtual;');
+
+    If FPropertyDefs.HaveConstructor Or FPropertyDefs.HaveDestructor Or
+       (lPublFunc.Count > 0) Then
+    Begin
+      AList.Add('');
+      AList.Add('    Public');
+    End;
+
+    For X := 0 To lPublFunc.Count - 1 Do
+      AList.Add('      ' + lPublFunc[X].GetProcedureDefinition(True));
+    If lPublFunc.Count > 0 Then
+      AList.Add('');
+
+    If FPropertyDefs.HaveConstructor Then
+      AList.Add('      Procedure AfterConstruction(); OverRide;');
+
+    If FPropertyDefs.HaveDestructor And Not (FDataType In [dsXML]) Then
+      AList.Add('      Procedure BeforeDestruction(); OverRide;');
+
+    If FPropertyDefs.HaveConstructor Or FPropertyDefs.HaveDestructor Then
+      AList.Add('');
+
+    AList.Add('    End;');
+    AList.Add('');
+  End;
+
 Begin
 //FProcedureDefs.Count - 1
 
@@ -1449,7 +1564,7 @@ Begin
     Else If FProcedureDefs[X].ProcedureScope = fsStrictProtected Then
       lSProtFunc.Add(FProcedureDefs[X]);
 
-  If FMakeList And FListSettings.UseNestedClass And (FDataType = dsNone) Then
+  If FMakeList And FListSettings.UseNestedClass And ((FDataType = dsNone) Or FUseInterface) Then
   Begin
     lTmpList := TStringList.Create();
     Try
@@ -1473,6 +1588,9 @@ Begin
         AList.Add('');
       End;
 
+      {$Region ' OldCode '}
+(*//@@D*)
+(*
       If FListSettings.IsSealed Then
         AList.Add('    T' + FClsName + 'Item = Class Sealed(TInterfacedObjectEx, I' + FClsName + ')')
       Else
@@ -1538,7 +1656,7 @@ Begin
         AList.Add('      ' + lProtFunc[X].GetProcedureDefinition(True));
       If lProtFunc.Count > 0 Then
         AList.Add('');
-        
+
       If FTrackChange Then
       Begin
         AList.Add('      Procedure Changed();');
@@ -1549,7 +1667,8 @@ Begin
       AList.Add('      Procedure Clear();');
       AList.Add('      Procedure Assign(ASource : TObject); ReIntroduce; Virtual;');
 
-      If FPropertyDefs.HaveConstructor Or FPropertyDefs.HaveDestructor Then
+      If FPropertyDefs.HaveConstructor Or FPropertyDefs.HaveDestructor Or
+         (lPublFunc.Count > 0) Then
       Begin
         AList.Add('');
         AList.Add('    Public');
@@ -1571,13 +1690,17 @@ Begin
 
       AList.Add('    End;');
       AList.Add('');
-  (**)
-      lPrivFunc.Clear();  
-      lProtFunc.Clear(); 
-      lPublFunc.Clear(); 
-      lSPrivFunc.Clear(); 
+  (*//@@F*)
+{$EndRegion}
+
+      GenerateItemClass();
+
+      lPrivFunc.Clear();
+      lProtFunc.Clear();
+      lPublFunc.Clear();
+      lSPrivFunc.Clear();
       lSProtFunc.Clear();
-      
+
       For X := 0 To FListSettings.Methods.Count - 1 Do
         If FListSettings.Methods[X].ProcedureScope = fsPrivate Then
           lPrivFunc.Add(FListSettings.Methods[X])
@@ -1746,7 +1869,7 @@ Begin
 
       If lProtFunc.Count > 0 Then
         AList.Add('');
-      
+
       //If Not (FDataType In [dsJSon, dsXML]) Then
       Begin
         If Not FUseCustomClass Then
@@ -1908,7 +2031,7 @@ Begin
     Begin
       FUseCustomClass := False;
       FUseInterface   := True;
-      FDataType       := dsNone;
+      //FDataType       := dsNone;
     End;
 
     Begin
@@ -2093,11 +2216,15 @@ Begin
 
       AList.Add('End;');
       AList.Add('');
-    
+
       {$Region ' MsSql Procs '}
       If FDataType In [dsMSSql] Then
       Begin
-        AList.Add('Procedure T' + lClsName + '.New();');
+        If FListSettings.UseNestedClass Then
+          AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.New();')
+        Else
+          AList.Add('Procedure T' + lClsName + '.New();');
+
         AList.Add('Begin');
         AList.Add('  Clear();');
         If FTrackChange Then
@@ -2117,7 +2244,12 @@ Begin
           End;
 
   //      AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
-        AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
+        If FListSettings.UseNestedClass Then
+          AList.Add(GetLoadParamType('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Load(AId : %DataType%);'))
+        Else
+          AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
+
+//        AList.Add(GetLoadParamType('Procedure T' + lClsName + '.Load(AId : %DataType%);'));
         AList.Add('Begin');
         lTmpList.Clear();
         If FDataType = dsMSSql Then
@@ -2129,7 +2261,11 @@ Begin
         AList.Add('End;');
         AList.Add('');
 
-        AList.Add('Procedure T' + lClsName + '.Save();');
+        If FListSettings.UseNestedClass Then
+          AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Save();')
+        Else
+          AList.Add('Procedure T' + lClsName + '.Save();');
+
         AList.Add('Begin');
         lTmpList.Clear();
         If FDataType = dsMSSql Then
@@ -2141,13 +2277,21 @@ Begin
         AList.Add('End;');
         AList.Add('');
 
-        AList.Add('Procedure T' + lClsName + '.Delete();');
+        If FListSettings.UseNestedClass Then
+          AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.Delete();')
+        Else
+          AList.Add('Procedure T' + lClsName + '.Delete();');
+
         AList.Add('Begin');
         AList.Add('  FDataState := edsDeleted;');
         AList.Add('End;');
         AList.Add('');
 
-        AList.Add('Procedure T' + lClsName + '.CreateTable();');
+        If FListSettings.UseNestedClass Then
+          AList.Add('Procedure T' + FClsName + 'List.T' + FClsName + 'Item.CreateTable();')
+        Else
+          AList.Add('Procedure T' + lClsName + '.CreateTable();');
+
         AList.Add('Begin');
         lTmpList.Clear();
         If FDataType = dsMSSql Then

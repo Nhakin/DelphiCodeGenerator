@@ -69,7 +69,7 @@ object FrmProcedureEditorDlg: TFrmProcedureEditorDlg
     BevelOuter = bvNone
     BorderWidth = 8
     TabOrder = 2
-    object MemoPreview: TSynMemo
+    object MemoPreview: TSynEdit
       Left = 8
       Top = 8
       Width = 723

@@ -1,10 +1,12 @@
 unit VTCombos;
 
 interface
+{$Define VT60}
 
 Uses
   Windows, Classes, Messages, SysUtils, Forms,
-  VTEditors, VirtualTrees{$IfDef VT60}, VirtualTrees.D2007Types{$EndIf};
+  VTEditors, VirtualTrees, VirtualTrees.Types;
+  //{$IfDef VT60}, VirtualTrees.D2007Types{$EndIf};
 
 Type
   TCustomVirtualStringTreeDropDown = Class(THsVTCustomControlDropDown)
@@ -16,10 +18,10 @@ Type
     Strict Protected
       {$IfDef VT60}
       Procedure DoGetText(Var pEventArgs: TVSTGetCellTextEventArgs); OverRide; Final;
-      procedure DoTextDrawing(Var PaintInfo: TVTPaintInfo; Const Text: UnicodeString; CellRect: TRect; DrawFormat: Cardinal); OverRide; Final;
+      procedure DoTextDrawing(Var PaintInfo: TVTPaintInfo; Const Text: String; CellRect: TRect; DrawFormat: Cardinal); OverRide; Final;
       {$Else}
-      Procedure DoGetText(Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType; Var Text: UnicodeString); OverRide; Final;
-      Procedure DoTextDrawing(Var PaintInfo: TVTPaintInfo; Text: UnicodeString; CellRect: TRect; DrawFormat: Cardinal); OverRide; Final;
+      Procedure DoGetText(Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType; Var Text: String); OverRide; Final;
+      Procedure DoTextDrawing(Var PaintInfo: TVTPaintInfo; Text: String; CellRect: TRect; DrawFormat: Cardinal); OverRide; Final;
       {$EndIf}
       Procedure DoNodeClick(Const HitInfo: THitInfo); OverRide; Final;
       Procedure DoHeaderClick({$IfDef VT60}Const {$EndIf}HitInfo: TVTHeaderHitInfo); OverRide; Final;
@@ -199,7 +201,7 @@ Begin
   FDropDown := AOwner;
 End;
 
-Procedure TCustomVirtualStringTreeDropDown.TVSTDDChild.DoTextDrawing(Var PaintInfo : TVTPaintInfo; {$IfDef VT60}Const {$EndIf}Text : UnicodeString; CellRect : TRect; DrawFormat : Cardinal);
+Procedure TCustomVirtualStringTreeDropDown.TVSTDDChild.DoTextDrawing(Var PaintInfo : TVTPaintInfo; {$IfDef VT60}Const {$EndIf}Text : String; CellRect : TRect; DrawFormat : Cardinal);
 Var lDoDraw : Boolean;
     lInfo : TVTImageInfo;
 Begin
@@ -272,7 +274,7 @@ Begin
   InHerited DoGetText(pEventArgs);
 End;
 {$Else}
-Procedure TCustomVirtualStringTreeDropDown.TVSTDDChild.DoGetText(Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType; Var Text: UnicodeString);
+Procedure TCustomVirtualStringTreeDropDown.TVSTDDChild.DoGetText(Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType; Var Text: String);
 Var lStr : TStringList;
 Begin
   Text := '';

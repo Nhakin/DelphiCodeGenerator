@@ -5,7 +5,8 @@ Interface
 Uses
   Windows, SysUtils, Classes, Graphics, Forms, Controls, StdCtrls,
   Buttons, ComCtrls, ExtCtrls, Dialogs, ADODB, VirtualTrees,
-  CodeGenIntf, dmCodeGen, MsSqlOptionIntf;
+  CodeGenIntf, dmCodeGen, MsSqlOptionIntf, VirtualTrees.BaseAncestorVCL,
+  VirtualTrees.BaseTree, VirtualTrees.AncestorVCL, Vcl.Mask;
 
 Type
   TFrmMsSqlCfg = Class(TForm)
@@ -40,7 +41,7 @@ Type
     procedure vstTableInitNode(Sender: TBaseVirtualTree; ParentNode,
       Node: PVirtualNode; var InitialStates: TVirtualNodeInitStates);
     procedure vstTableGetText(Sender: TBaseVirtualTree; Node: PVirtualNode;
-      Column: TColumnIndex; TextType: TVSTTextType; var CellText: WideString);
+      Column: TColumnIndex; TextType: TVSTTextType; var CellText: String);
     procedure cboDatabasesDropDown(Sender: TObject);
 
   Private
@@ -214,7 +215,7 @@ End;
 
 procedure TFrmMsSqlCfg.vstTableGetText(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
-  var CellText: WideString);
+  var CellText: String);
 begin
   CellText := FLstTables[Node.Index];
 end;

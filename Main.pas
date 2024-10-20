@@ -3,13 +3,16 @@ unit Main;
 interface
 
 uses
-  HsInterfaceEx, CodeGen.VT, ApplicationOptions.IO, SearchTextDlg,
+  CodeGen.VT, ApplicationOptions.IO, SearchTextDlg,
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, Tabs, ComCtrls, SynEdit, SynMemo, SynEditHighlighter,
+  Dialogs, ExtCtrls, Tabs, ComCtrls, SynEdit, SynEditHighlighter,
   SynHighlighterPas, VirtualTrees, StdCtrls, Menus, ToolWin, ImgList,
-  SynEditMiscClasses, SynEditSearch, ActnList, TB2Dock, TB2Toolbar, SpTBXItem,
-  SpTBXMDIMRU, SpTBXDkPanels, SpTBXSkins, SpTBXAdditionalSkins, TB2Item,
-  SpTBXExControls;
+  SynEditMiscClasses, SynEditSearch, ActnList, TB2Dock, TB2Toolbar, TB2Item,
+  SpTBXItem, SpTBXMDIMRU, SpTBXDkPanels, SpTBXSkins, SpTBXExControls, SpTBXAdditionalSkins,
+  System.Actions, System.ImageList, SynEditCodeFolding,
+  VirtualTrees.BaseAncestorVCL, VirtualTrees.BaseTree, VirtualTrees.AncestorVCL,
+  HsInterfaceEx;
+  //, SpTBXExControls, SpTBXAdditionalSkins, SynMemo;
 
 Type
   PInterface = ^IInterfaceEx;
@@ -68,7 +71,7 @@ Type
     Panel1: TPanel;
     tsMain: TTabSet;
     PanPreview: TPanel;
-    MemoPreview: TSynMemo;
+    MemoPreview: TSynEdit;
     SpTBXSplitter1: TSpTBXSplitter;
     SpTBXExpandCollapse: TSpTBXTBGroupItem;
     SpTBXpopTv: TSpTBXTBGroupItem;
@@ -103,7 +106,7 @@ Type
 
     //Treeview UI
     procedure vstProjectGetText(Sender: TBaseVirtualTree; Node: PVirtualNode;
-      Column: TColumnIndex; TextType: TVSTTextType; var CellText: WideString);
+      Column: TColumnIndex; TextType: TVstTextType; var CellText: string);
     procedure vstProjectBeforeCellPaint(Sender: TBaseVirtualTree;
       TargetCanvas: TCanvas; Node: PVirtualNode; Column: TColumnIndex;
       CellPaintMode: TVTCellPaintMode; CellRect: TRect; var ContentRect: TRect);
@@ -112,7 +115,7 @@ Type
     procedure vstProjectFocusChanged(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Column: TColumnIndex);
     procedure vstProjectNewText(Sender: TBaseVirtualTree; Node: PVirtualNode;
-      Column: TColumnIndex; NewText: WideString);
+      Column: TColumnIndex; NewText: String);
     procedure vstProjectEditing(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; var Allowed: Boolean);
     procedure vstProjectCreateEditor(Sender: TBaseVirtualTree;
@@ -158,7 +161,7 @@ Type
     FAppOptions : IApplicationOptionsIO;
     FTreeDataEx : IHsVTUnitGeneratorNode;
     FFileName   : String;
-    
+
     Procedure DovstProjectExpandNode(Sender: TBaseVirtualTree; Node: PVirtualNode; Data: Pointer; Var Abort: Boolean);
     Procedure UpdatePropertyDefNodeVisible();
     Procedure DoEditorButtonClick(Sender : TObject; Node : PVirtualNode);
@@ -166,7 +169,7 @@ Type
 
     Procedure DoSearchReplaceText(AReplace: Boolean; ABackwards: Boolean);
     Procedure ShowSearchReplaceDialog(AReplace: Boolean);
-    
+
   public
 
   end;
@@ -176,12 +179,12 @@ var
 
 implementation
 
-Uses TypInfo, Math, SynEditTypes, HsXmlDocEx, HsJSonEx, HsBase64Ex, FastStringFuncs,
+Uses TypInfo, Math, SynEditTypes, HsXmlDocEx, HsJSonEx, HsBase64Ex, //FastStringFuncs,
   AbZipKit, AbZipTyp, HegFile, DateUtils,
 //  SearchOptions.Ini, SearchOptions.Xml, SearchOptions.JSon,
   ApplicationOptions.Ini, ApplicationOptions.Xml, ApplicationOptions.JSon,
   CodeGenType, CodeGenBuilder,
-  MsSqlCfgDlg, VTCodeGenEditor, HsStreamEx, HsIniFilesEx;
+  MsSqlCfgDlg, VTCodeGenEditor, VirtualTrees.Types, HsStreamEx, HsIniFilesEx;
 
 {$R *.dfm}
 
@@ -349,6 +352,10 @@ begin
   Else
     FAppOptions := TApplicationOptionsIO.CreateAppicaltionOptions();
 end;
+
+type
+  TTest = Class Sealed(TObject)
+  End;
 
 procedure TFrmMain.FormDestroy(Sender: TObject);
 Var lFileName : String;
@@ -1193,9 +1200,8 @@ begin
   End;
 end;
 
-procedure TFrmMain.vstProjectGetText(Sender: TBaseVirtualTree;
-  Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
-  var CellText: WideString);
+procedure TFrmMain.vstProjectGetText(Sender: TBaseVirtualTree; Node: PVirtualNode;
+  Column: TColumnIndex; TextType: TVstTextType; var CellText: string);
 Var lNodeData : PInterface;
 
     lNodeUnit     : IHsVTUnitGeneratorNode;
@@ -1206,7 +1212,7 @@ Var lNodeData : PInterface;
     lNodeProps    : IHsVTPropertyDefsNode;
     lNodeProp     : IHsVTPropertyDefNode;
     lMethods      : IHsVTProcedureDefsNode;
-    lMethod       : IHsVTProcedureDefNode;     
+    lMethod       : IHsVTProcedureDefNode;
     lNodeSettings : IHsVTSettingNodes;
     lNodeSetting  : IHsVTSettingNode;
     lNodeListSettings : IHsVTListSettingsNode;
@@ -1298,7 +1304,8 @@ begin
   End;
 end;
 
-procedure TFrmMain.vstProjectInitChildren(Sender: TBaseVirtualTree;
+
+Procedure TFrmMain.vstProjectInitChildren(Sender: TBaseVirtualTree;
   Node: PVirtualNode; var ChildCount: Cardinal);
 Var lNodeData    : PInterface;
     lNodeProp    : IHsVTPropertyDefNode;
@@ -1306,6 +1313,7 @@ Var lNodeData    : PInterface;
     lMethods     : IHsVTProcedureDefsNode;
     lMethod      : IHsVTProcedureDefNode;
     lLstSettings : IHsVTListSettingsNode;
+    lLstClasses  : IHsVTClassCodeGeneratorsNode;
 begin
   lNodeData := Sender.GetNodeData(Node);
   If Assigned(lNodeData) Then
@@ -1316,6 +1324,8 @@ begin
       ChildCount := 2
     Else If Supports(lNodeData^, IHsVTClassCodeGeneratorNode) Then
       ChildCount := 5
+//    Else If Supports(lNodeData^, IHsVTClassCodeGeneratorsNode, lLstClasses) Then
+//      ChildCount := lLstClasses.Count
     Else If Supports(lNodeData^, IHsVTPropertyDefNode, lNodeProp) Then
       ChildCount := lNodeProp.Settings.Count
     Else If Supports(lNodeData^, IInterfaceListEx, lNodeCount) Then
@@ -1574,7 +1584,7 @@ begin
 end;
 
 procedure TFrmMain.vstProjectNewText(Sender: TBaseVirtualTree;
-  Node: PVirtualNode; Column: TColumnIndex; NewText: WideString);
+  Node: PVirtualNode; Column: TColumnIndex; NewText: String);
 Var lNodeData : PInterface;
 
     lNodeUnit     : IHsVTUnitGeneratorNode;
